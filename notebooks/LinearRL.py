@@ -7,7 +7,7 @@ from utils import create_transition_matrix_mapping, get_transition_matrix
 
 
 class LinearRL:
-    def __init__(self, env_name, alpha, gamma, _lambda=1.0, epsilon=0.4, num_steps=25000):
+    def __init__(self, env_name, alpha, _lambda=1.0, epsilon=0.4, num_steps=25000):
         self.env = gym.make(env_name)
         self.start_loc = self.env.unwrapped.start_loc
         self.target_loc = self.env.unwrapped.target_loc
@@ -18,7 +18,7 @@ class LinearRL:
         # self.mapping = self.create_transition_matrix_mapping()
         # self.T = self.get_transition_matrix(size=self.size, mapping=self.mapping)
         self.mapping = create_transition_matrix_mapping(self.maze)
-        self.T = get_transition_matrix(self.env, self.size, self.mapping)
+        self.T, self.barriers = get_transition_matrix(self.env, self.size, self.mapping)
         
 
         # Get terminal states
@@ -33,15 +33,15 @@ class LinearRL:
 
         # Params
         self.alpha = alpha
-        self.gamma = gamma
+        self.gamma = np.exp(-0.1/_lambda)
         self._lambda = _lambda
         self.epsilon = epsilon
         self.num_steps = num_steps
 
         # Model
-        self.DR = np.eye(self.size)
+        self.DR = self.get_DR()
         # self.DR = np.zeros((self.size, self.size))
-        self.Z = np.zeros(self.size)
+        self.Z = np.full(self.size, 0)
         self.V = np.zeros(self.size)
         self.one_hot = np.eye(self.size)
     
@@ -85,22 +85,53 @@ class LinearRL:
         
         return T
     
+    def get_DR(self):
+        DR = np.full((self.size, self.size), 0.1)
+        # DR[:, self.barriers] = 0
+        # DR[self.barriers, :] = 0
+        np.fill_diagonal(DR, 1)
+
+        return DR
+    
     def update_V(self):
         self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr
         self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)
         self.V = np.round(np.log(self.Z), 2)
     
-    def importance_sampling(self, state, s_new_idx):
+    def importance_sampling(self, state, s_prob):
         successor_states = self.env.unwrapped.get_successor_states(state)
         p = 1/len(successor_states)
-        w = (p * self.Z[s_new_idx]) / sum(p * self.Z[self.mapping[(s[0][0],s[0][1])]] for s in successor_states)
-        
+        w = p/s_prob
+                
         return w
     
-    def select_action(self, state, policy="random", target_loc=None):
+    def select_action(self, state, policy="random", beta=7, target_loc=None):
         if policy == "random":
             return self.env.unwrapped.random_action()
-    
+        
+        elif policy == "softmax":
+            successor_states = self.env.unwrapped.get_successor_states(state)      # succesor_states = [(state, terminated), ...]
+            action_probs = np.full(self.env.action_space.n, 0.0)
+
+            v_sum = sum(
+                        np.exp((np.log(self.Z[self.mapping[(s[0][0],s[0][1])]] + 1e-20)) / beta) for s in successor_states
+                        )
+
+            # if we don't have enough info, random action
+            if v_sum == 0:
+                return self.env.unwrapped.random_action() 
+
+            for action in self.env.unwrapped.get_available_actions(state):
+                direction = self.env.unwrapped._action_to_direction[action]
+                new_state = state + direction
+                
+                action_probs[action] = np.exp((np.log(self.Z[self.mapping[(new_state[0], new_state[1])]] + 1e-20)) / beta ) / v_sum
+
+            action = np.random.choice(self.env.action_space.n, p=action_probs)
+            s_prob = action_probs[action]
+
+            return action, s_prob
+        
         elif policy == "e-greedy":
             if np.random.uniform(low=0,high=1) < self.epsilon:
                 return self.env.unwrapped.random_action()
@@ -135,7 +166,7 @@ class LinearRL:
         """
         Agent randomly explores the maze and and updates its DR as it goes
         """
-
+        print(f"Decision Policy: {policy}")
         self.env.reset()        
 
         # Iterate through number of steps
@@ -146,22 +177,23 @@ class LinearRL:
 
             # Choose action (random for now)
             # action = self.env.unwrapped.random_action()
-            action = self.select_action(state, policy)
+            # action = self.select_action(state, policy)
+
+            if policy == "softmax":
+                action, s_prob = self.select_action(state, policy)
+            else:
+                action = self.select_action(state, policy)
 
             # Take action
             obs, _, done, _, _ = self.env.step(action)
-
-            if done:
-                self.env.reset()
-                continue
 
             # Unpack observation to get new state
             next_state = obs["agent"]
             next_state_idx = self.mapping[(next_state[0], next_state[1])]
 
             # Importance sampling
-            if policy == "egreedy":
-                w = self.importance_sampling(state, next_state_idx)
+            if policy == "softmax":
+                w = self.importance_sampling(state, s_prob)
                 w = 1 if np.isnan(w) or w == 0 else w
             else:
                 w = 1
@@ -175,10 +207,13 @@ class LinearRL:
 
 
             # Update Z-Values
-            self.Z[state_idx] = self.DR[state_idx][~self.terminals] @ self.P @ self.expr
+            self.Z[state_idx] = self.DR[:,~self.terminals] @ self.P @ self.expr
             # self.Z[state_idx] = self.DR[state_idx] @ self.P @ self.expr
-
+        
             # Update state
+            if done:
+                self.env.reset()
+                continue
             state = next_state
         
         self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)

@@ -6,46 +6,48 @@ import random
 
 
 def create_transition_matrix_mapping(maze):
-        """
-        Creates a mapping from maze state indices to transition matrix indices
-        """
-        n = len(maze)  # Size of the maze (N)
+    """
+    Creates a mapping from maze state indices to transition matrix indices
+    """
+    n = len(maze)  # Size of the maze (N)
 
-        mapping = {}
-        matrix_idx = 0
+    mapping = {}
+    matrix_idx = 0
 
-        for i in range(n):
-            for j in range(n):
-                mapping[(i,j)] = matrix_idx
-                matrix_idx += 1
+    for i in range(n):
+        for j in range(n):
+            mapping[(i,j)] = matrix_idx
+            matrix_idx += 1
 
-        return mapping
+    return mapping
 
 def get_transition_matrix(env, size, mapping):
-        maze = env.unwrapped.maze
+    barriers = []
+    maze = env.unwrapped.maze
 
-        T = np.zeros(shape=(size, size))
-        # loop through the maze
-        for row in range(maze.shape[0]):
-            for col in range(maze.shape[1]):            
-                # if we hit a barrier
-                if maze[row,col] == '1':
-                    continue
+    T = np.zeros(shape=(size, size))
+    # loop through the maze
+    for row in range(maze.shape[0]):
+        for col in range(maze.shape[1]):            
+            # if we hit a barrier
+            if maze[row,col] == '1':
+                barriers.append(mapping[row, col])
+                continue
 
-                idx_cur = mapping[row, col]
+            idx_cur = mapping[row, col]
 
-                # check if current state is terminal
-                if maze[row,col] == 'G':
-                    T[idx_cur, idx_cur] = 1
-                    continue
+            # check if current state is terminal
+            if maze[row,col] == 'G':
+                T[idx_cur, idx_cur] = 1
+                continue
 
-                state = (row,col)
-                successor_states = env.unwrapped.get_successor_states(state)
-                for successor_state in successor_states:
-                    idx_new = mapping[successor_state[0][0], successor_state[0][1]]
-                    T[idx_cur, idx_new] = 1/len(successor_states)
-        
-        return T
+            state = (row,col)
+            successor_states = env.unwrapped.get_successor_states(state)
+            for successor_state in successor_states:
+                idx_new = mapping[successor_state[0][0], successor_state[0][1]]
+                T[idx_cur, idx_new] = 1/len(successor_states)
+    
+    return T, barriers
 
 def get_map(agent):
     # Replace 'S' and 'G' with 0
@@ -204,6 +206,9 @@ def test_agent(agent, state=None):
     """
     Function to test the agent
     """
+    # Set the policy to testing
+    agent.policy = "test"
+
     traj = []
 
     agent.env.reset()
@@ -216,7 +221,9 @@ def test_agent(agent, state=None):
     steps = 0
     done = False
     while not done:
-        action = agent.select_action(state, policy="test", target_loc=agent.target_loc)
+        # action = agent.select_action(state, policy="test", target_loc=agent.target_loc)
+        action = agent.select_action(state, target_loc=agent.target_loc)
+
         obs, _, done, _, _ = agent.env.step(action)
         next_state = obs["agent"]
         traj.append(next_state)
