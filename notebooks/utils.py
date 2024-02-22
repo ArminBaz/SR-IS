@@ -5,7 +5,7 @@ import matplotlib.animation as manimation
 import random
 
 
-def create_transition_matrix_mapping(maze):
+def create_mapping(maze):
     """
     Creates a mapping from maze state indices to transition matrix indices
     """
@@ -22,6 +22,40 @@ def create_transition_matrix_mapping(maze):
     return mapping
 
 def get_transition_matrix(env, size, mapping):
+    """
+    Creates a state -> state transition matrix. This means the transition matrix *excludes* blocks that are inacessible
+    """
+    barriers = []
+    maze = env.unwrapped.maze
+
+    T = np.zeros(shape=(size, size))
+    # loop through the maze
+    for row in range(maze.shape[0]):
+        for col in range(maze.shape[1]):  
+            # if we hit a barrier
+            if maze[row,col] == '1':
+                barriers.append(mapping[row, col])
+                continue
+
+            idx_cur = mapping[row, col]
+
+            # check if current state is terminal
+            if maze[row,col] == 'G':
+                T[idx_cur, idx_cur] = 1
+                continue
+
+            state = (row,col)
+            successor_states = env.unwrapped.get_successor_states(state)
+            for successor_state in successor_states:
+                idx_new = mapping[successor_state[0][0], successor_state[0][1]]
+                T[idx_cur, idx_new] = 1/len(successor_states)
+    
+    return T, barriers
+
+def get_transition_matrix_full(env, size, mapping):
+    """
+    Creates a block -> block transition matrix. This means the transition matrix *includes* blocks that are inacessible
+    """
     barriers = []
     maze = env.unwrapped.maze
 

@@ -134,6 +134,20 @@ class MazeEnv(gym.Env):
         
         return next_states
     
+    def get_walls(self):
+        """
+        Returns a list of all the walls (blocked squares)
+        """
+        walls = []
+        # Loop through the maze
+        for row in range(self.num_rows):
+            for col in range(self.num_cols):
+                # If square is blocked
+                if self.maze[row, col] == '1':
+                    walls.append((row,col))
+        
+        return walls
+    
     def _read_maze_file(self, maze_file):
         dir_path = os.path.dirname(os.path.abspath(__file__))
         rel_path = os.path.join(dir_path, "maze_files", maze_file)
@@ -327,3 +341,7 @@ if __name__ == '__main__':
     print(f"Random action: {rand_action}")
     obs, reward, term, _, info = env.step(rand_action)
     print(f"Post step obs: {obs}, reward: {reward}, terminated: {term}, info: {info}")
+    print("Printing maze:")
+    print(env.maze)
+    print("Printing wall locations:")
+    print(env.get_walls())
