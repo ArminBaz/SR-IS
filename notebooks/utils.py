@@ -21,9 +21,28 @@ def create_mapping(maze):
 
     return mapping
 
-def get_transition_matrix(env, size, mapping):
+def create_mapping_nb(maze, walls):
     """
-    Creates a state -> state transition matrix. This means the transition matrix *excludes* blocks that are inacessible
+    Creates a mapping from maze state indices to transition matrix indices
+    This mapping *excludes* blocks that are inacessible, hence the nb stands for "not blocked"
+    """
+    n = len(maze)  # Size of the maze (N)
+
+    # Create a mapping from maze state indices to transition matrix indices
+    mapping = {}
+    matrix_idx = 0
+
+    for i in range(n):
+        for j in range(n):
+            if (i, j) not in walls:
+                mapping[(i, j)] = matrix_idx
+                matrix_idx += 1
+
+    return mapping
+
+def get_transition_matrix_nb(env, size, mapping):
+    """
+    Creates a state -> state transition matrix. This means the transition matrix *excludes* blocks that are inacessible, hence the nb stands for "not blocked"
     """
     barriers = []
     maze = env.unwrapped.maze
@@ -52,20 +71,18 @@ def get_transition_matrix(env, size, mapping):
     
     return T, barriers
 
-def get_transition_matrix_full(env, size, mapping):
+def get_transition_matrix(env, mapping):
     """
     Creates a block -> block transition matrix. This means the transition matrix *includes* blocks that are inacessible
     """
-    barriers = []
     maze = env.unwrapped.maze
 
-    T = np.zeros(shape=(size, size))
+    T = np.zeros(shape=(len(mapping), len(mapping)))
     # loop through the maze
     for row in range(maze.shape[0]):
         for col in range(maze.shape[1]):            
             # if we hit a barrier
             if maze[row,col] == '1':
-                barriers.append(mapping[row, col])
                 continue
 
             idx_cur = mapping[row, col]
@@ -81,7 +98,7 @@ def get_transition_matrix_full(env, size, mapping):
                 idx_new = mapping[successor_state[0][0], successor_state[0][1]]
                 T[idx_cur, idx_new] = 1/len(successor_states)
     
-    return T, barriers
+    return T
 
 def get_map(agent):
     # Replace 'S' and 'G' with 0
@@ -91,6 +108,20 @@ def get_map(agent):
     m = m.astype(int)
     
     return m
+
+def get_full_maze_values(agent):
+    """
+    Function that prints out the values of each state and labels blocked states
+    """
+    v_maze = np.zeros_like(agent.maze, dtype=np.float64)
+    for row in range(v_maze.shape[0]):
+        for col in range(v_maze.shape[1]):
+            if agent.maze[row, col] == "1":
+                v_maze[row,col] = -np.inf
+                continue
+            v_maze[row,col] = agent.V[agent.mapping[(row,col)]]
+    
+    return v_maze
 
 def render_maze(agent, state, ax=None):    
     if ax is None:
