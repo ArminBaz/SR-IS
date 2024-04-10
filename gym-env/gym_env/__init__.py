@@ -14,6 +14,13 @@ register(
     max_episode_steps=2000,
 )
 
+# Simple 7x7 with two goal states
+register(
+    id="simple-7x7-2",
+    entry_point="gym_env.envs:MazeEnv7x7_2G",
+    max_episode_steps=2000,
+)
+
 # Hairpin
 register(
     id="hairpin-14x14",
