@@ -7,6 +7,13 @@ register(
     max_episode_steps=2000,
 )
 
+# Simple 5x5 with two goal states
+register(
+    id="simple-5x5-2",
+    entry_point="gym_env.envs:MazeEnv5x5_2G",
+    max_episode_steps=2000,
+)
+
 # Hairpin
 register(
     id="hairpin-14x14",

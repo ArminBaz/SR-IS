@@ -13,6 +13,7 @@ gym_env/envs/maze_files/four_room_tr.npy
 gym_env/envs/maze_files/hairpin_14x14.npy
 gym_env/envs/maze_files/maze2d_5x5.npy
 gym_env/envs/maze_files/maze_15x15.npy
+gym_env/envs/maze_files/maze_5x5_2g.npy
 gym_env/envs/maze_files/tolman_10x10_latent.npy
 gym_env/envs/maze_files/tolman_10x10_latent_new_goal.npy
 gym_env/envs/maze_files/tolman_9x9_v0.npy
