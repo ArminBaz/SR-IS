@@ -1,4 +1,5 @@
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import matplotlib.animation as manimation
@@ -127,18 +128,44 @@ def render_maze(agent, state, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
     m = get_map(agent)
+
+    # Define color palette
+    color_palette = sns.color_palette("colorblind")
     
     # Display maze
-    ax.imshow(m, origin='upper')
+    ax.imshow(m, origin='upper', cmap='gray_r')
+
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
+
+    ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
     # Display agent
-    agent_loc = patches.Circle((state[1],state[0]), radius=0.4, fill=True, color='white')
+    agent_loc = patches.Circle((state[1],state[0]), radius=0.4, fill=True, color='blue', alpha=0.7)
     ax.add_patch(agent_loc)
+
     # Display Reward
-    reward = patches.Circle((agent.target_loc[1],agent.target_loc[0]), radius=0.4, fill=True, color='green')
-    ax.add_patch(reward)
+    for i, target_loc in enumerate(agent.target_locs):
+        # reward = patches.Circle((target_loc[1], target_loc[0]), radius=0.4, fill=True, color='green')
+        reward = patches.Rectangle((target_loc[1] - 0.5, target_loc[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
+        ax.text(target_loc[1], target_loc[0], f'r{i+1}', color='white', fontsize=10, ha='center', va='center')
+        ax.add_patch(reward)
+
+    # Color specific maze locations using Rectangle patches
+    maze_colors = { (0, 1): color_palette[3], (1, 0): color_palette[2] }
+    for loc, color in maze_colors.items():
+        rect = patches.Rectangle((loc[1] - 0.5, loc[0] - 0.5), 1.0, 1.0, fill=True, color=color)
+        ax.text(loc[1], loc[0], f's{list(maze_colors.keys()).index(loc) + 1}', color='white', fontsize=10, ha='center', va='center')
+        ax.add_patch(rect)
 
     ax.set_title('Map')
-    ax.set_axis_off()
+
+    # Hide tick labels
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    # Hide tick marks
+    ax.tick_params(which='both', size=0)
 
 def render_DR(agent, state, ax=None):
     state_idx = agent.mapping[(state[0], state[1])]
