@@ -1,6 +1,7 @@
 import os
-import numpy as np
+import time
 
+import numpy as np
 import pygame
 import gymnasium as gym
 from gymnasium import error, spaces, utils
@@ -39,7 +40,7 @@ class MazeEnv(gym.Env):
         self.observation_space = spaces.Dict(
             {
                 "agent": spaces.Box(low=np.array([0,0]), high=np.array([self.num_rows-1, self.num_cols-1]), shape=(2,), dtype=int),
-                "targets": spaces.Box(low=np.array([0,0]), high=np.array([self.num_rows-1, self.num_cols-1]), shape=(2,), dtype=int),
+                "targets": spaces.Box(low=np.tile(np.array([0, 0]), (len(self.target_locs), 1)), high=np.tile(np.array([self.num_rows-1, self.num_cols-1]), (len(self.target_locs), 1)), shape=(len(self.target_locs), 2), dtype=int),
             }
         )
 
@@ -54,7 +55,7 @@ class MazeEnv(gym.Env):
         self.window = None
         self.clock = None
 
-    def reset(self, seed=None):
+    def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
 
@@ -357,7 +358,7 @@ class MazeEnv4RoomBR(MazeEnv):
 
 if __name__ == '__main__':
     # Test it out
-    env = MazeEnv(maze_file="tolman_10x10_latent.npy")
+    env = MazeEnv(maze_file="maze_7x7_2g.npy", render_mode='human')
     # env = MazeEnv(maze_file="hairpin_14x14.npy")
     print(f"env: {env}")
     print(f"start loc: {env.start_loc}, target locs: {env.target_locs}")
@@ -371,3 +372,5 @@ if __name__ == '__main__':
     print(env.maze)
     print("Printing wall locations:")
     print(env.get_walls())
+    # env.render()
+    # time.sleep(20)
