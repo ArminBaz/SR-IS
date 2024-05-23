@@ -1,1 +1,2 @@
-from gym_env.envs.maze_env import MazeEnv, MazeEnv5x5, MazeEnvHairpin, MazeEnvTolmanNB, MazeEnvTolmanB, MazeEnv15x15, MazeEnv4RoomBR, MazeEnv4RoomTR, MazeEnvTolmanLatent, MazeEnvTolmanLatentNewGoal, MazeEnv5x5_2G, MazeEnv7x7_2G
+# from gym_env.envs.maze_env import MazeEnv, MazeEnv5x5, MazeEnvHairpin, MazeEnvTolmanNB, MazeEnvTolmanB, MazeEnv15x15, MazeEnv4RoomBR, MazeEnv4RoomTR, MazeEnvTolmanLatent, MazeEnvTolmanLatentNewGoal, MazeEnv5x5_2G, MazeEnv7x7_2G, MazeEnv10x10_2G, 
+from gym_env.envs.maze_env import *

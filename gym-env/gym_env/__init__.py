@@ -48,10 +48,42 @@ register(
     max_episode_steps=2000,
 )
 
-# Tolman latent task
+# Tolman latent task new goal
 register(
     id="tolman-10x10-latent-new-goal",
     entry_point="gym_env.envs:MazeEnvTolmanLatentNewGoal",
+    max_episode_steps=2000,
+)
+
+# 10x10 two goals
+register(
+    id="maze-10x10-two-goal",
+    entry_point="gym_env.envs:MazeEnv10x10_2G",
+    max_episode_steps=2000,
+)
+
+# 10x10 with different goal states
+register(
+    id="maze-10x10-G0",
+    entry_point="gym_env.envs:MazeEnv10x10_G0",
+    max_episode_steps=2000,
+)
+
+register(
+    id="maze-10x10-G1",
+    entry_point="gym_env.envs:MazeEnv10x10_G1",
+    max_episode_steps=2000,
+)
+
+register(
+    id="maze-10x10-G2",
+    entry_point="gym_env.envs:MazeEnv10x10_G2",
+    max_episode_steps=2000,
+)
+
+register(
+    id="maze-10x10-G3",
+    entry_point="gym_env.envs:MazeEnv10x10_G3",
     max_episode_steps=2000,
 )
 
@@ -72,5 +104,25 @@ register(
 register(
     id="simple-15x15",
     entry_point="gym_env.envs:MazeEnv15x15",
+    max_episode_steps=2000,
+)
+
+# 15x15 new goal
+register(
+    id="simple-15x15-new-goal",
+    entry_point="gym_env.envs:MazeEnv15x15NewGoal",
+    max_episode_steps=2000,
+)
+
+# 15x15 with different goal states
+register(
+    id="maze-15x15-G0",
+    entry_point="gym_env.envs:MazeEnv15x15_G0",
+    max_episode_steps=2000,
+)
+
+register(
+    id="maze-15x15-G1",
+    entry_point="gym_env.envs:MazeEnv15x15_G1",
     max_episode_steps=2000,
 )

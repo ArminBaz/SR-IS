@@ -11,3 +11,5 @@ __pycache__/
 gym-env/build/
 gym-env/dist/
 gym-env/gym_env.egg-info/
+
+figures/

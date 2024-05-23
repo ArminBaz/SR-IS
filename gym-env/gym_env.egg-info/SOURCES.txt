@@ -12,7 +12,15 @@ gym_env/envs/maze_files/four_room_br.npy
 gym_env/envs/maze_files/four_room_tr.npy
 gym_env/envs/maze_files/hairpin_14x14.npy
 gym_env/envs/maze_files/maze2d_5x5.npy
+gym_env/envs/maze_files/maze_10x10_2g.npy
+gym_env/envs/maze_files/maze_10x10_G0.npy
+gym_env/envs/maze_files/maze_10x10_G1.npy
+gym_env/envs/maze_files/maze_10x10_G2.npy
+gym_env/envs/maze_files/maze_10x10_G3.npy
 gym_env/envs/maze_files/maze_15x15.npy
+gym_env/envs/maze_files/maze_15x15_G0.npy
+gym_env/envs/maze_files/maze_15x15_G1.npy
+gym_env/envs/maze_files/maze_15x15_new_goal.npy
 gym_env/envs/maze_files/maze_5x5_2g.npy
 gym_env/envs/maze_files/maze_7x7_2g.npy
 gym_env/envs/maze_files/tolman_10x10_latent.npy

@@ -324,6 +324,10 @@ class MazeEnv7x7_2G(MazeEnv):
     def __init__(self):
         super(MazeEnv7x7_2G, self).__init__(maze_file="maze_7x7_2g.npy")
 
+class MazeEnv10x10_2G(MazeEnv):
+    def __init__(self):
+        super(MazeEnv10x10_2G, self).__init__(maze_file="maze_10x10_2g.npy")
+
 class MazeEnvHairpin(MazeEnv):
     def __init__(self):
         super(MazeEnvHairpin, self).__init__(maze_file="hairpin_14x14.npy")
@@ -340,6 +344,10 @@ class MazeEnv15x15(MazeEnv):
     def __init__(self):
         super(MazeEnv15x15, self).__init__(maze_file="maze_15x15.npy")
 
+class MazeEnv15x15NewGoal(MazeEnv):
+    def __init__(self):
+        super(MazeEnv15x15NewGoal, self).__init__(maze_file="maze_15x15_new_goal.npy")
+
 class MazeEnvTolmanLatent(MazeEnv):
     def __init__(self):
         super(MazeEnvTolmanLatent, self).__init__(maze_file="tolman_10x10_latent.npy")
@@ -355,6 +363,30 @@ class MazeEnv4RoomTR(MazeEnv):
 class MazeEnv4RoomBR(MazeEnv):
     def __init__(self):
         super(MazeEnv4RoomBR, self).__init__(maze_file="four_room_br.npy")
+
+class MazeEnv15x15_G0(MazeEnv):
+    def __init__(self):
+        super(MazeEnv15x15_G0, self).__init__(maze_file="maze_15x15_G0.npy")
+
+class MazeEnv15x15_G1(MazeEnv):
+    def __init__(self):
+        super(MazeEnv15x15_G1, self).__init__(maze_file="maze_15x15_G1.npy")
+
+class MazeEnv10x10_G0(MazeEnv):
+    def __init__(self):
+        super(MazeEnv10x10_G0, self).__init__(maze_file="maze_10x10_G0.npy")
+
+class MazeEnv10x10_G1(MazeEnv):
+    def __init__(self):
+        super(MazeEnv10x10_G1, self).__init__(maze_file="maze_10x10_G1.npy")
+
+class MazeEnv10x10_G2(MazeEnv):
+    def __init__(self):
+        super(MazeEnv10x10_G2, self).__init__(maze_file="maze_10x10_G2.npy")
+
+class MazeEnv10x10_G3(MazeEnv):
+    def __init__(self):
+        super(MazeEnv10x10_G3, self).__init__(maze_file="maze_10x10_G3.npy")
 
 if __name__ == '__main__':
     # Test it out
