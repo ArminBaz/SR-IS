@@ -21,37 +21,44 @@ def update_terminal_reward(agent, loc, r):
     # Update expr_t inside of the agent
     agent.expr_t = np.exp(agent.r[agent.terminals] / agent._lambda)
 
-def replan_barrier(agent, T_new, delta_locs, inv=False):
+def exponential_decay(initial_learning_rate, decay_rate, global_step, decay_steps):
     """
-    Performs replanning when the transition structure of the environment changes
+    Applies exponential decay to the learning rate.
+    """
+    learning_rate = initial_learning_rate * decay_rate ** (global_step / decay_steps)
+    return learning_rate
 
+def woodbury(agent, T, inv=False):
+    """
+    Applies the woodbury update to the DR of the agent, accomodating for new transition structure (T)
+    
     Args:
-        agent (LinearRL Agent Class) : Original DR to use
-        T_new (array) : New transition matrix when transition to a state is blocked
-        delta_locs (list) : States whose transitions have changed
-    Returns:
-        D (array) : Updated DR after performing Woodbury
+        agent (LinearRL class) : The LinearRL agent 
+        T (array) : The transition matrix of the new environment
+        inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
     """
-    T = agent.T
-    r = agent.r
+    differences = agent.T != T
+    different_rows, _ = np.where(differences)
+    delta_locs = np.unique(different_rows)
 
-    L0 = np.diag(np.exp(-r/agent._lambda)) - T
-    L = np.diag(np.exp(-r/agent._lambda)) - T_new
-
-    delta = L[delta_locs] - L0[delta_locs]
-
+    L0 = np.diag(np.exp(-agent.r)) - agent.T
     if inv:
         D0 = np.linalg.inv(L0)
     else:
         D0 = agent.gamma * agent.DR
-    D0_j = D0[:,delta_locs]
+        
+    L = np.diag(np.exp(-agent.r)) - T
 
-    I = np.eye(len(delta_locs))
-    inv = np.linalg.inv(I + np.dot(delta, D0_j))
+    d = L[delta_locs, :] - L0[delta_locs, :]
+    m0 = D0[:,delta_locs]
 
-    B = np.dot( np.dot(D0_j, inv), np.dot(delta, D0) )
+    c = np.zeros_like(m0)
+    c[delta_locs[0], 0] = 1
+    c[delta_locs[1], 1] = 1
 
-    D = D0 - B
+    a = np.linalg.inv(np.eye(len(delta_locs)) + d @ D0 @ c)
+
+    D = D0 - (D0 @ c @ a @ d @ D0)
 
     return D
 
@@ -292,6 +299,30 @@ def gen_nhb_exp():
     # State 5 -> 5'
     envstep[5,0] = [8,1]
     envstep[5,1] = [8,1]
+    
+    return envstep
+
+def gen_two_step():
+    """
+    Defines the environment for the two-step task. Each step returns the next state and if we are in a terminal state
+    """
+    envstep=[]
+    for s in range(3):
+        # actions 0=left, 1=right
+        envstep.append([[0,0], [0,0]])  # [s', done]
+    envstep = np.array(envstep)
+
+    # State 0 -> 1, 2
+    envstep[0,0] = [1,0]
+    envstep[0,1] = [2,0]
+
+    # State 1 -> 3, 4
+    envstep[1,0] = [3,1]
+    envstep[1,1] = [4,1]
+
+    # State 2 -> 5, 6
+    envstep[2,0] = [5,1]
+    envstep[2,1] = [6,1]
     
     return envstep
 
