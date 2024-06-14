@@ -18,8 +18,9 @@ class LinearRL:
         policy (string) : Decision policy
         imp_samp (bool) : Whether or not to use importance sampling
         decay (bool) : Whether or not to use learning rate decay
+        decay_params (list) : decay parameters (decay_rate, decay_steps)
     """
-    def __init__(self, env_name, reward=-0.2, alpha=0.1, beta=1, _lambda=1.0, num_steps=25000, policy="random", imp_samp=False, decay=False):
+    def __init__(self, env_name, reward=-0.2, alpha=0.1, beta=1, _lambda=1.0, num_steps=25000, policy="random", imp_samp=False, decay=False, decay_params=None):
         self.env = gym.make(env_name)
         self.start_loc = self.env.unwrapped.start_loc
         self.target_locs = self.env.unwrapped.target_locs
@@ -58,8 +59,8 @@ class LinearRL:
 
         if decay:
             self.inital_lr = alpha
-            self.decay_rate = 0.99
-            self.decay_steps = 150
+            self.decay_rate = decay_params[0]
+            self.decay_steps = decay_params[1]
 
         # Model
         self.DR = self.get_DR()
