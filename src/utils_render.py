@@ -8,7 +8,7 @@ import random
 from utils import get_map
 
 
-def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=None):
+def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=None, wall=None):
     """
     Renders the maze
 
@@ -17,6 +17,7 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
         state (tuple/array, Optional) : The state to draw the agent in, if None will use starting location
         locs (List of states, Optional) : Color specific locations (states)
         colors (List of color idxs, Optional) : The specific idx of colors to use from the colorblind color palette
+        wall (list, Optional) : List containing two sublists for wall coordinates [[row1, row2], [col1, col2]]
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -53,6 +54,14 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
             rect = patches.Rectangle((loc[1] - 0.5, loc[0] - 0.5), 1.0, 1.0, fill=True, color=color_palette[color])
             ax.text(loc[1], loc[0], f's{locs.index(loc) + 1}', color='white', fontsize=10, ha='center', va='center')
             ax.add_patch(rect)
+
+    if wall is not None:
+        print(f"Attempting to draw wall: {wall}")  # Debugging print
+        [row, col], [direction] = wall
+        if direction == 'h':  # Horizontal wall
+            ax.plot([col - 0.5, col + 0.5], [row - 0.5, row - 0.5], color='red', linewidth=4, zorder=10)
+        elif direction == 'v':  # Vertical wall
+            ax.plot([col - 0.5, col - 0.5], [row - 0.5, row + 0.5], color='red', linewidth=4, zorder=10)
 
     # Hide tick labels
     ax.set_xticklabels([])
@@ -95,7 +104,13 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
         plt.legend(handles, [f'State {i+1}' for i in range(len(probs_train))], title='States', loc='upper right')
     
     plt.ylabel('Probabilities')
-    plt.xticks([0.5, 2.0], ['Training', 'Test'])
+    plt.xticks([0.2, 1.7], ['Training', 'Test'])
+
+    # Set custom y-axis ticks
+    max_prob = max(max(probs_train), max(probs_test))
+    y_ticks = np.arange(0, max_prob + 0.1, 0.1)
+    plt.yticks(y_ticks)
+
     plt.rcParams['font.family'] = 'serif'
 
     if title is not None:

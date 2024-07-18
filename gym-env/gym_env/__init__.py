@@ -43,6 +43,13 @@ register(
 
 # Tolman latent task
 register(
+    id="tolman-latent",
+    entry_point="gym_env.envs:MazeEnvTolmanLatentOG",
+    max_episode_steps=2000,
+)
+
+# Tolman latent task from Russek et al.
+register(
     id="tolman-10x10-latent",
     entry_point="gym_env.envs:MazeEnvTolmanLatent",
     max_episode_steps=2000,

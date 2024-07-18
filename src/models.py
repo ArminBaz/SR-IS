@@ -1,16 +1,17 @@
 import numpy as np
 import gymnasium as gym
 
-
 import gym_env
 from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_two_step, exponential_decay
+
 
 class LinearRL:
     """
     LinearRL-TD agent for maze environments
 
     Args:
-        reward (floa) : The reward to make states (has effect on gamma)
+        reward (float) : The reward to make states (has effect on gamma)
+        term_reward (float) : The reward of the terminal state
         alpha (float) : Learning rate
         beta (float) : Temperature parameter
         _lambda (float) : Lambda value that downweights the rewards
@@ -20,7 +21,7 @@ class LinearRL:
         decay (bool) : Whether or not to use learning rate decay
         decay_params (list) : decay parameters (decay_rate, decay_steps)
     """
-    def __init__(self, env_name, reward=-0.2, alpha=0.1, beta=1, _lambda=1.0, num_steps=25000, policy="random", imp_samp=False, decay=False, decay_params=None):
+    def __init__(self, env_name, reward=-0.2, term_reward=-0.2, alpha=0.1, beta=1, _lambda=1.0, num_steps=25000, policy="random", imp_samp=False, decay=False, decay_params=None):
         self.env = gym.make(env_name)
         self.start_loc = self.env.unwrapped.start_loc
         self.target_locs = self.env.unwrapped.target_locs
@@ -40,7 +41,7 @@ class LinearRL:
         self.P = self.T[~self.terminals][:,self.terminals]
         # Set reward
         self.reward_nt = reward   # Non-terminal state reward
-        self.reward_t = 10    # Terminal state reward
+        self.reward_t = term_reward    # Terminal state reward
         self.r = np.full(len(self.T), self.reward_nt)
         self.r[self.terminals] = self.reward_t
         self.expr_t = np.exp(self.r[self.terminals] / _lambda)
@@ -111,7 +112,7 @@ class LinearRL:
     def select_action(self, state):
         """
         Action selection based on our policy
-        Options are: [random, softmax, egreedy, test]
+        Options are: [random, softmax, greedy]
         """
         if self.policy == "random":
             return self.env.unwrapped.random_action()
@@ -126,7 +127,7 @@ class LinearRL:
 
             # if we don't have enough info, random action
             if v_sum == 0:
-                return self.env.unwrapped.random_action() 
+                return self.env.unwrapped.random_action(), 1
 
             for action in self.env.unwrapped.get_available_actions(state):
                 direction = self.env.unwrapped._action_to_direction[action]
@@ -139,7 +140,7 @@ class LinearRL:
 
             return action, s_prob
             
-        elif self.policy == "test":
+        elif self.policy == "greedy":
             action_values = np.full(self.env.action_space.n, -np.inf)
             for action in self.env.unwrapped.get_available_actions(state):
                 direction = self.env.unwrapped._action_to_direction[action]
@@ -202,8 +203,9 @@ class LinearRL:
         """
         Agent explores the maze according to its decision policy and and updates its DR as it goes
         """
-        # print(f"Decision Policy: {self.policy}, Number of Iterations: {self.num_steps}, lr={self.alpha}, temperature={self.beta}, importance sampling={self.imp_samp}")
+        # Set the seeds
         self.env.reset(seed=seed, options={})
+        np.random.seed(seed)
 
         # Iterate through number of steps
         for i in range(self.num_steps):
@@ -231,6 +233,7 @@ class LinearRL:
         # Update DR at terminal state
         self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)
         self.V = np.round(np.log(self.Z), 2)
+
 
 class LinearRL_NHB:
     def __init__(self, alpha=0.25, beta=10, _lambda=10, epsilon=0.4, num_steps=25000, policy="softmax", imp_samp=True, exp_type="policy_reval"):
@@ -365,7 +368,7 @@ class LinearRL_NHB:
     def select_action(self, state):
         """
         Action selection based on our policy
-        Options are: [random, softmax, egreedy, test]
+        Options are: [random, softmax]
         """
         if self.policy == "random":
             action = np.random.choice([0,1])
@@ -452,6 +455,7 @@ class LinearRL_NHB:
         self.update_Z()
         self.update_V()
 
+
 class LinearRL_TwoStep:
     """
     LinearRL-TD agent specifically desinged for the two-step task
@@ -531,7 +535,7 @@ class LinearRL_TwoStep:
         if self.policy == "softmax":
             DR = np.full((self.size, self.size), 0.01)
             np.fill_diagonal(DR, 1)
-            DR[np.where(self.terminals)[0], np.where(self.terminals)[0]] = (1/(self.gamma))
+            DR[np.where(self.terminals)[0], np.where(self.terminals)[0]] = (1/(1-self.gamma))
         else:
             DR = np.eye(self.size)
 
@@ -572,7 +576,7 @@ class LinearRL_TwoStep:
     def select_action(self, state):
         """
         Action selection based on our policy
-        Options are: [random, softmax, egreedy, test]
+        Options are: [random, softmax]
         """
         if self.policy == "random":
             action = np.random.choice([0,1])
@@ -646,3 +650,156 @@ class LinearRL_TwoStep:
         # Update DR at terminal state
         self.update_Z()
         self.update_V()
+
+
+class SR_TD:
+    """
+    SR-TD agent for maze environments
+
+    Args:
+        reward (float) : The reward to make states (has effect on gamma)
+        term_reward (float) : The reward at the terminal state
+        alpha (float) : Learning rate
+        beta (float) : Temperature parameter
+        _lambda (float) : Lambda value that downweights the rewards
+        num_steps (int) : Number of training steps
+        policy (string) : Decision policy
+        imp_samp (bool) : Whether or not to use importance sampling
+        decay (bool) : Whether or not to use learning rate decay
+        decay_params (list) : decay parameters (decay_rate, decay_steps)
+    """
+    def __init__(self, env_name, reward=-0.2, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random"):
+        self.env = gym.make(env_name)
+        self.start_loc = self.env.unwrapped.start_loc
+        self.target_locs = self.env.unwrapped.target_locs
+        self.maze = self.env.unwrapped.maze
+        self.walls = self.env.unwrapped.get_walls()
+        self.size = self.maze.size - len(self.walls)   # Size of the state space is the = size of maze - number of blocked states
+        self.height, self.width = self.maze.shape
+
+        # Create mapping and Transition matrix
+        self.mapping = create_mapping_nb(self.maze, self.walls)
+        self.reverse_mapping = {index: (i, j) for (i, j), index in self.mapping.items()}
+        self.T = get_transition_matrix(self.env, self.mapping)
+
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+
+        # Set reward
+        self.reward_nt = reward            # Non-terminal state reward
+        self.reward_t = term_reward        # Terminal state reward
+        self.r = np.full(self.size, self.reward_nt)
+        self.r[self.terminals] = self.reward_t
+
+        # Params
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.num_steps = num_steps
+        self.policy = policy
+
+        # Model
+        self.SR = np.eye(self.size)
+        self.V = np.zeros(self.size)
+        self.one_hot = np.eye(self.size)
+
+    def update_V(self):
+        self.V = self.SR @ self.r
+
+    def select_action(self, state):
+        """
+        Action selection based on our policy
+        Options are: [random, softmax, greedy]
+        """
+        if self.policy == "random":
+            return self.env.unwrapped.random_action()
+        
+        elif self.policy == "softmax":
+            successor_states = self.env.unwrapped.get_successor_states(state)
+            action_probs = np.full(self.env.action_space.n, 0.0)
+
+            v_sum = sum(
+                        ( self.V[self.mapping[(s[0][0],s[0][1])]] / self.beta ) for s in successor_states
+                        )
+
+            # if we don't have enough info, random action
+            if v_sum == 0:
+                return self.env.unwrapped.random_action(), None
+
+            for action in self.env.unwrapped.get_available_actions(state):
+                direction = self.env.unwrapped._action_to_direction[action]
+                new_state = state + direction
+                action_probs[action] = ( self.V[self.mapping[(new_state[0], new_state[1])]] / self.beta ) / v_sum
+            
+            action = np.random.choice(self.env.action_space.n, p=action_probs)
+
+            return action, None
+            
+        elif self.policy == "greedy":
+            action_values = np.full(self.env.action_space.n, -np.inf)
+            for action in self.env.unwrapped.get_available_actions(state):
+                direction = self.env.unwrapped._action_to_direction[action]
+                new_state = state + direction
+                if np.any(np.all(self.target_locs == new_state, axis=1)):
+                    return action
+
+                if self.maze[new_state[0], new_state[1]] == "1":
+                    continue
+                action_values[action] = self.V[self.mapping[(new_state[0], new_state[1])]]
+
+            return np.nanargmax(action_values)
+
+    def take_action(self, state):
+        """
+        Select an action according to policy and take it. 
+        """
+        # Choose action
+        if self.policy == "softmax":
+            action, _ = self.select_action(state)
+        else:
+            action = self.select_action(state)
+
+        # Take action
+        obs, _, done, _, _ = self.env.step(action)
+
+        # Unpack observation to get new state
+        next_state = obs["agent"]
+        next_state_idx = self.mapping[(next_state[0], next_state[1])]
+        
+        return next_state, next_state_idx, done
+
+    def update(self, state_idx, next_state_idx):
+        """
+        Update the DR
+        """
+        # Update successor representation
+        self.SR[state_idx] = (1 - self.alpha) * self.SR[state_idx] + self.alpha * (self.one_hot[state_idx] + self.gamma * self.SR[next_state_idx])
+
+        # Update Values
+        self.update_V()
+
+    def learn(self, seed=None):
+        """
+        Agent explores the maze according to its decision policy and and updates its DR as it goes
+        """
+        # print(f"Decision Policy: {self.policy}, Number of Iterations: {self.num_steps}, lr={self.alpha}, temperature={self.beta}, importance sampling={self.imp_samp}")
+        self.env.reset(seed=seed, options={})
+
+        # Iterate through number of steps
+        for i in range(self.num_steps):
+            # Current state
+            state = self.env.unwrapped.agent_loc
+            state_idx = self.mapping[(state[0], state[1])]
+
+            # Take action
+            next_state, next_state_idx, done = self.take_action(state)
+
+            # Update  DR
+            self.update(state_idx, next_state_idx)
+
+            if done:
+                self.env.reset(seed=seed, options={})
+                continue
+            
+            # Update state
+            state = next_state

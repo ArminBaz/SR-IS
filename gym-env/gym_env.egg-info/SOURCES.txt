@@ -27,3 +27,4 @@ gym_env/envs/maze_files/tolman_10x10_latent.npy
 gym_env/envs/maze_files/tolman_10x10_latent_new_goal.npy
 gym_env/envs/maze_files/tolman_9x9_v0.npy
 gym_env/envs/maze_files/tolman_9x9_v1.npy
+gym_env/envs/maze_files/tolman_latent.npy

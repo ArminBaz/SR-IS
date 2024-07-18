@@ -348,6 +348,10 @@ class MazeEnv15x15NewGoal(MazeEnv):
     def __init__(self):
         super(MazeEnv15x15NewGoal, self).__init__(maze_file="maze_15x15_new_goal.npy")
 
+class MazeEnvTolmanLatentOG(MazeEnv):
+    def __init__(self):
+        super(MazeEnvTolmanLatentOG, self).__init__(maze_file="tolman_latent.npy")
+
 class MazeEnvTolmanLatent(MazeEnv):
     def __init__(self):
         super(MazeEnvTolmanLatent, self).__init__(maze_file="tolman_10x10_latent.npy")
@@ -390,7 +394,7 @@ class MazeEnv10x10_G3(MazeEnv):
 
 if __name__ == '__main__':
     # Test it out
-    env = MazeEnv(maze_file="maze_7x7_2g.npy", render_mode='human')
+    env = MazeEnv(maze_file="tolman_latent.npy", render_mode='human')
     # env = MazeEnv(maze_file="hairpin_14x14.npy")
     print(f"env: {env}")
     print(f"start loc: {env.start_loc}, target locs: {env.target_locs}")

@@ -41,24 +41,58 @@ def woodbury(agent, T, inv=False):
     different_rows, _ = np.where(differences)
     delta_locs = np.unique(different_rows)
 
-    L0 = np.diag(np.exp(-agent.r)) - agent.T
+    L0 = np.diag(np.exp(-agent.r)) - agent.T 
+    L = np.diag(np.exp(-agent.r)) - T
+
     if inv:
         D0 = np.linalg.inv(L0)
     else:
         D0 = agent.gamma * agent.DR
-        
-    L = np.diag(np.exp(-agent.r)) - T
 
-    d = L[delta_locs, :] - L0[delta_locs, :]
+    R = L[delta_locs, :] - L0[delta_locs, :]
     m0 = D0[:,delta_locs]
 
-    c = np.zeros_like(m0)
-    c[delta_locs[0], 0] = 1
-    c[delta_locs[1], 1] = 1
+    C = np.zeros_like(m0)
+    C[delta_locs[0], 0]    = 1
+    C[delta_locs[1], 1] = 1
 
-    a = np.linalg.inv(np.eye(len(delta_locs)) + d @ D0 @ c)
+    A = np.linalg.inv(np.eye(len(delta_locs)) + R @ D0 @ C)
 
-    D = D0 - (D0 @ c @ a @ d @ D0)
+    D = D0 - (D0 @ C @ A @ R @ D0)
+
+    return D
+
+def woodbury_SR(agent, T, inv=False):
+    """
+    Applies the woodbury update to the SR of the agent, accomodating for new transition structure (T)
+    
+    Args:
+        agent (LinearRL class) : The LinearRL agent 
+        T (array) : The transition matrix of the new environment
+        inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
+    """
+    differences = agent.T != T
+    different_rows, _ = np.where(differences)
+    delta_locs = np.unique(different_rows)
+
+    L0 = np.diag(np.exp(-agent.r)) - agent.T 
+    L = np.diag(np.exp(-agent.r)) - T
+
+    if inv:
+        D0 = np.linalg.inv(L0)
+    else:
+        D0 = agent.SR
+
+    R = L[delta_locs, :] - L0[delta_locs, :]
+    m0 = D0[:,delta_locs]
+
+    C = np.zeros_like(m0)
+    C[delta_locs[0], 0] = 1
+    C[delta_locs[1], 1] = 1
+
+    A = np.linalg.inv(np.eye(len(delta_locs)) + R @ D0 @ C)
+
+    D = D0 - (D0 @ C @ A @ R @ D0)
 
     return D
 
@@ -78,7 +112,7 @@ def policy_reval(agent):
 
     Z_new[~agent.terminals] = agent.DR[~agent.terminals][:,~agent.terminals] @ agent.P @ expr_new
     Z_new[agent.terminals] = expr_new
-    V_new = np.round(np.log(Z_new), 2)
+    V_new = np.round(np.log(Z_new), 4)
 
     return V_new, Z_new
 
@@ -326,16 +360,24 @@ def gen_two_step():
     
     return envstep
 
-def test_agent(agent, state=None):
+def test_agent(agent, policy="greedy", state=None, seed=None):
     """
     Function to test the agent
+
+    Args:
+        agent (LinearRL class) : The LinearRL agent
+        policy (string) : Which policy to use, default is greedy
+        state (tuple) : The starting state, default is none which sets the agent at the starting state of the maze
+    
+    Returns:
+        traj (list) : The list of states the agent chooses
     """
     # Set the policy to testing
-    agent.policy = "test"
+    agent.policy = policy
 
     traj = []
 
-    agent.env.reset()
+    agent.env.reset(seed=seed, options={})
     if state is None:
         state = agent.start_loc
 
@@ -345,7 +387,10 @@ def test_agent(agent, state=None):
     steps = 0
     done = False
     while not done:
-        action = agent.select_action(state)
+        if policy == "softmax":
+            action, _ = agent.select_action(state)
+        else:
+            action = agent.select_action(state)
 
         obs, _, done, _, _ = agent.env.step(action)
         next_state = obs["agent"]
