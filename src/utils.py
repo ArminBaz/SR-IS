@@ -53,7 +53,7 @@ def woodbury(agent, T, inv=False):
     m0 = D0[:,delta_locs]
 
     C = np.zeros_like(m0)
-    C[delta_locs[0], 0]    = 1
+    C[delta_locs[0], 0] = 1
     C[delta_locs[1], 1] = 1
 
     A = np.linalg.inv(np.eye(len(delta_locs)) + R @ D0 @ C)
@@ -71,6 +71,7 @@ def woodbury_SR(agent, T, inv=False):
         T (array) : The transition matrix of the new environment
         inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
     """
+    # agent.T is T_pi
     differences = agent.T != T
     different_rows, _ = np.where(differences)
     delta_locs = np.unique(different_rows)

@@ -74,7 +74,7 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
-def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None):
+def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, std=None):
     """
     Plots the decision probability of going towards a terminal state
 
@@ -84,6 +84,8 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
         colors (array) : idx of color pallette color to use 
         leg_loc (string, Optional) : Location to place the legend
         save_path (string, Optional) : File path to save the image to
+        title (string, Optional) : Title of the figure
+        std (list [std_train, std_test], Optional) : Std deviations for both training and test
     """
     color_palette = sns.color_palette("colorblind")
     color_list = []
@@ -95,6 +97,11 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     plt.bar(bar_positions_training, probs_train, width=0.3, color=color_list, edgecolor='black')
     plt.bar(bar_positions_test, probs_test, width=0.3, color=color_list, edgecolor='black')
+
+    # Add error bars if std is provided
+    if std is not None:
+        plt.errorbar(bar_positions_training, probs_train, yerr=std[0], fmt='none', ecolor='black', capsize=5)
+        plt.errorbar(bar_positions_test, probs_test, yerr=std[1], fmt='none', ecolor='black', capsize=5)
 
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
 
