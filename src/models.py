@@ -825,7 +825,7 @@ class SR_NHB:
         self.terminals = np.diag(self.T) == 1
 
         # Set reward
-        self.reward_nt = -1
+        self.reward_nt = 1
         self.r = np.full(len(self.T), self.reward_nt)
         # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
         if self.exp_type == "policy_reval":
@@ -889,7 +889,7 @@ class SR_NHB:
         """
         if self.policy == "random":
             successor_states = self.get_successor_states(state)
-            return np.random.choice(successor_states)
+            return np.random.choice([0,1])
 
         elif self.policy == "softmax":
             successor_states = self.get_successor_states(state)
@@ -915,13 +915,13 @@ class SR_NHB:
             # Current state
             state = self.agent_loc
             action = self.select_action(state)
+            # print(state, action)
 
             # Take action
             next_state, done = self.envstep[state, action]
 
-            # Update default representation
-            target = self.one_hot[state] + self.gamma * self.SR[next_state]
-            self.SR[state] = (1 - self.alpha) * self.SR[state] + self.alpha * target
+            # Update SR
+            self.SR[state] = (1-self.alpha)* self.SR[state] + self.alpha * ( self.one_hot[state] + self.gamma * self.SR[next_state]  )
 
             # Update Values
             self.update_V()
@@ -933,14 +933,3 @@ class SR_NHB:
             # Update state
             state = next_state
             self.agent_loc = state
-    
-    def learn_new_reward(self, seed=None):
-        for i in range(20):
-            state = 3
-            next_state = 3
-            target = self.one_hot[state] + self.gamma * self.SR[next_state]
-            self.SR[state] = (1 - self.alpha) * self.SR[state] + self.alpha * target
-            self.update_V()
-
-        # Update DR at terminal state
-        self.update_V()
