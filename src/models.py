@@ -2,7 +2,7 @@ import numpy as np
 import gymnasium as gym
 
 import gym_env
-from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_two_step, exponential_decay
+from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_nhb_exp_SR, gen_two_step, exponential_decay
 
 
 class LinearRL:
@@ -254,7 +254,7 @@ class LinearRL_NHB:
         self.P = self.T[~self.terminals][:,self.terminals]
 
         # Set reward
-        self.reward_nt = -1   # Non-terminal state reward (set to 0 for SR)
+        self.reward_nt = -1
         self.r = np.full(len(self.T), self.reward_nt)
         # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
         if self.exp_type == "policy_reval":
@@ -408,10 +408,13 @@ class LinearRL_NHB:
 
         return D_inv
 
-    def learn(self):
+    def learn(self, seed=None):
         """
         Agent explores the maze according to its decision policy and and updates its DR as it goes
         """
+        if seed is not None:
+            np.random.seed(seed=seed)
+
         # Iterate through number of steps
         for i in range(self.num_steps):
             # Agent gets some knowledge of terminal state values
@@ -803,3 +806,141 @@ class SR_TD:
             
             # Update state
             state = next_state
+
+
+class SR_NHB:
+    def __init__(self, alpha=0.1, beta=1, gamma=0.904, num_steps=25000, policy="random", exp_type="policy_reval"):
+        # Hard code start and end locations as well as size
+        self.start_loc = 0
+        self.target_locs = [3,4,5]
+        self.size = 6
+        self.agent_loc = self.start_loc
+        self.exp_type = exp_type
+
+        # Construct the transition probability matrix and envstep functions
+        self.T = self.construct_T()
+        self.envstep = gen_nhb_exp_SR()
+
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+
+        # Set reward
+        self.reward_nt = -1
+        self.r = np.full(len(self.T), self.reward_nt)
+        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        if self.exp_type == "policy_reval":
+            self.r_term_1 = [0, 15, 30]
+            self.r_term_2 = [45, 15, 30]
+        elif self.exp_type == "reward_reval":
+            self.r_term_1 = [15, 0, 30]
+            self.r_term_2 = [45, 0, 30]
+        else:
+            print("Incorrect experiment type (exp_type)")
+            return(0)
+        self.r[self.terminals] = self.r_term_1
+
+        # Params
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.num_steps = num_steps
+        self.policy = policy
+
+        # Model
+        self.SR = np.eye(self.size)
+        self.V = np.zeros(self.size)
+        self.one_hot = np.eye(self.size)
+
+    def construct_T(self):
+        """
+        Manually construct a T that is biased by a decision policy
+        """
+        T = np.zeros((6, 6))
+        T[0,1] = 0.5
+        T[0,2] = 0.5
+        T[1,3] = 0.5
+        T[1,4] = 0.5
+        T[2,4] = 0.5
+        T[2,5] = 0.5
+        T[3:6, 3:6] = np.eye(3)
+
+        return T
+    
+    def update_exp(self):
+        """
+        Update the terminal state values or transition matrix (experiment dependent)
+        """
+        if self.exp_type in ["reward_reval", "policy_reval"]:
+            self.r[self.terminals] = self.r_term_2
+
+    def update_V(self):
+        self.V = self.SR @ self.r
+
+    def get_successor_states(self, state):
+        """
+        Manually define the successor states based on which state we are in
+        """
+        return np.where(self.T[state, :] != 0)[0]
+
+    def select_action(self, state):
+        """
+        Action selection based on our policy
+        Options are: [random, softmax, egreedy, test]
+        """
+        if self.policy == "random":
+            successor_states = self.get_successor_states(state)
+            return np.random.choice(successor_states)
+
+        elif self.policy == "softmax":
+            successor_states = self.get_successor_states(state)
+            action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
+
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.beta)
+            action_probs = exp_V / exp_V.sum()
+
+            action = np.random.choice([0,1], p=action_probs)
+
+            return action
+
+    def learn(self, seed=None):
+        """
+        Agent explores the maze according to its decision policy and and updates its DR as it goes
+        """
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        # Iterate through number of steps
+        for i in range(self.num_steps):
+            # Current state
+            state = self.agent_loc
+            action = self.select_action(state)
+
+            # Take action
+            next_state, done = self.envstep[state, action]
+
+            # Update default representation
+            target = self.one_hot[state] + self.gamma * self.SR[next_state]
+            self.SR[state] = (1 - self.alpha) * self.SR[state] + self.alpha * target
+
+            # Update Values
+            self.update_V()
+
+            if done:
+                self.agent_loc = self.start_loc
+                continue
+
+            # Update state
+            state = next_state
+            self.agent_loc = state
+    
+    def learn_new_reward(self, seed=None):
+        for i in range(20):
+            state = 3
+            next_state = 3
+            target = self.one_hot[state] + self.gamma * self.SR[next_state]
+            self.SR[state] = (1 - self.alpha) * self.SR[state] + self.alpha * target
+            self.update_V()
+
+        # Update DR at terminal state
+        self.update_V()

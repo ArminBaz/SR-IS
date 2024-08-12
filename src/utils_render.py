@@ -100,8 +100,8 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     # Add error bars if std is provided
     if std is not None:
-        plt.errorbar(bar_positions_training, probs_train, yerr=std[0], fmt='none', ecolor='black', capsize=5)
-        plt.errorbar(bar_positions_test, probs_test, yerr=std[1], fmt='none', ecolor='black', capsize=5)
+        plt.errorbar(bar_positions_training, probs_train, yerr=std[0], fmt='none', ecolor='black', capsize=0)
+        plt.errorbar(bar_positions_test, probs_test, yerr=std[1], fmt='none', ecolor='black', capsize=0)
 
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
 
@@ -122,6 +122,77 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     if title is not None:
         plt.title(title)
+
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
+    plt.show()
+
+def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg_loc=None, save_path=None, title=None, std=None):
+    """
+    Plots the decision probability of going towards a terminal state for three different revaluation scenarios
+
+    Args:
+        probs_reward (array) : Probability of heading towards each terminal state after reward revaluation
+        probs_policy (array) : Probability of heading towards each terminal state after policy revaluation
+        probs_transition (array) : Probability of heading towards each terminal state after transition revaluation
+        colors (array) : idx of color palette color to use 
+        leg_loc (string, Optional) : Location to place the legend
+        save_path (string, Optional) : File path to save the image to
+        title (string, Optional) : Title of the figure
+        std (list [std_reward, std_policy, std_trans], Optional) : Std deviations for reward, policy, and transition revaluations
+    """
+    color_palette = sns.color_palette("colorblind")
+    color_list = [color_palette[color] for color in colors]
+
+    num_states = len(probs_reward)
+    bar_width = 0.3  # Reduced bar width
+    state_spacing = 0.05  # Added spacing between bars for each state
+    group_spacing = 0.8  # Increased group spacing
+    
+    # Calculate positions for each group of bars
+    indices = np.arange(3) * (num_states * (bar_width + state_spacing) + group_spacing)
+    
+    plt.figure(figsize=(16, 6))
+
+    # Plot bars for each revaluation type
+    for i in range(num_states):
+        plt.bar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], bar_width, color=color_list[i], edgecolor='black')
+        plt.bar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], bar_width, color=color_list[i], edgecolor='black')
+        plt.bar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], bar_width, color=color_list[i], edgecolor='black')
+
+    # Add error bars if std is provided
+    if std is not None:
+        for i in range(num_states):
+            plt.errorbar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], yerr=std[0], fmt='none', ecolor='black', capsize=0)
+            plt.errorbar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], yerr=std[1], fmt='none', ecolor='black', capsize=0)
+            plt.errorbar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], yerr=std[2], fmt='none', ecolor='black', capsize=0)
+
+    # Create legend for states
+    handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(num_states)]
+    if leg_loc is not None:
+        plt.legend(handles, [f'State {i+1}' for i in range(num_states)], title='States', loc=leg_loc, fontsize=12, title_fontsize=14)
+    else:
+        plt.legend(handles, [f'State {i+1}' for i in range(num_states)], title='States', loc='upper right', fontsize=12, title_fontsize=14)
+
+    plt.xlabel('Revaluation Type', fontsize=18, labelpad=20)  # Increased labelpad for more space
+    plt.ylabel('Probabilities', fontsize=18)
+    plt.title(title if title else 'Decision Probabilities Across Revaluations', fontsize=22, pad=20)
+    
+    # Set x-ticks to be in the middle of the grouped bars
+    plt.xticks(indices + (num_states - 1) * (bar_width + state_spacing) / 2, ['Reward Revaluation', 'Policy Revaluation', 'Transition Revaluation'], fontsize=16)
+
+    # Set custom y-axis ticks
+    max_prob = max(max(probs_reward), max(probs_policy), max(probs_transition))
+    y_ticks = np.arange(0, min(max_prob + 0.1, 1.05), 0.1)
+    plt.yticks(y_ticks, fontsize=12)
+
+    plt.rcParams['font.family'] = 'serif'
+
+    # Adjust layout to prevent cutting off labels and add more space at the bottom
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)  # Increase bottom margin
 
     # Save the image
     if save_path is not None:

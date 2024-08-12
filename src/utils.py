@@ -62,22 +62,22 @@ def woodbury(agent, T, inv=False):
 
     return D
 
-def woodbury_SR(agent, T, inv=False):
+def woodbury_SR(agent, T, T_pi, inv=False):
     """
     Applies the woodbury update to the SR of the agent, accomodating for new transition structure (T)
     
     Args:
         agent (LinearRL class) : The LinearRL agent 
         T (array) : The transition matrix of the new environment
+        T_pi (array) : The biased SR transition matrix
         inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
     """
-    # agent.T is T_pi
-    differences = agent.T != T
+    differences = T_pi != T
     different_rows, _ = np.where(differences)
     delta_locs = np.unique(different_rows)
 
-    L0 = np.diag(np.exp(-agent.r)) - agent.T 
-    L = np.diag(np.exp(-agent.r)) - T
+    L0 = np.diag(np.full(agent.size, agent.gamma)) - T_pi
+    L = np.diag(np.full(agent.size, agent.gamma)) - T
 
     if inv:
         D0 = np.linalg.inv(L0)
@@ -301,6 +301,28 @@ def decision_policy(agent, Z):
 
     return pii
 
+def decision_policy_SR(agent):
+    """
+    Computes the SR decision policy, which acts as T^pi
+    """
+    T_pi = np.zeros_like(agent.T)
+    for state in agent.mapping:
+        state_idx = agent.mapping[state]
+        successor_states = agent.env.unwrapped.get_successor_states(state)
+
+        v_sum = sum(
+                    ( agent.V[agent.mapping[(s[0][0],s[0][1])]] / agent.beta ) for s in successor_states
+                    )
+
+        for action in agent.env.unwrapped.get_available_actions(state):
+            direction = agent.env.unwrapped._action_to_direction[action]
+            new_state = state + direction
+            new_state_idx = agent.mapping[(new_state[0], new_state[1])]
+            prob = ( agent.V[new_state_idx] / agent.beta ) / v_sum
+            T_pi[state_idx, new_state_idx] += prob
+    
+    return T_pi
+        
 def gen_nhb_exp():
     """
     Defines the environment for the Nature Human Behavior experiment introduced by Momennejad et al.
@@ -334,6 +356,30 @@ def gen_nhb_exp():
     # State 5 -> 5'
     envstep[5,0] = [8,1]
     envstep[5,1] = [8,1]
+    
+    return envstep
+
+def gen_nhb_exp_SR():
+    """
+    Defines the environment for the Nature Human Behavior experiment introduced by Momennejad et al.
+    """
+    envstep=[]
+    for s in range(6):
+        # actions 0=left, 1=right
+        envstep.append([[0,0], [0,0]])  # [s', done]
+    envstep = np.array(envstep)
+
+    # State 0 -> 1, 2
+    envstep[0,0] = [1,0]
+    envstep[0,1] = [2,0]
+
+    # State 1 -> 3, 4
+    envstep[1,0] = [3,1]
+    envstep[1,1] = [4,1]
+
+    # State 2 -> 4, 5
+    envstep[2,0] = [4,1]
+    envstep[2,1] = [5,1]
     
     return envstep
 
@@ -377,8 +423,10 @@ def test_agent(agent, policy="greedy", state=None, seed=None):
     agent.policy = policy
 
     traj = []
-
-    agent.env.reset(seed=seed, options={})
+    
+    if seed is not None:
+        agent.env.reset(seed=seed, options={})
+        np.random.seed(seed)
     if state is None:
         state = agent.start_loc
 
