@@ -129,6 +129,70 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     plt.show()
 
+def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_path=None):
+    """
+    Another bar plot for decision probabilities, this one is exclusive to the NHB Decision probs
+
+    Args:
+        means (array) : mean of each bar to plot
+        colors (list) : idx of color palette color to use
+        ylabel (string) : label for the y-axis
+        xlabels (list of strings) : labels for the x-axis
+        std (array, optional) : std error of each bar
+        title (string, optional) : title of the plot
+        save_path (string, optional) : where to save the figure
+    """
+    color_palette = sns.color_palette("colorblind")
+    color_list = []
+    for color in colors:
+        color_list.append(color_palette[color])
+
+    # Set the style and font
+    plt.rcParams['font.family'] = 'serif'
+    
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(6, 7))
+    x = np.arange(len(means)) * 0.25
+    
+    # Plot the bars with black edge color
+    bars = ax.bar(x, means, color=color_list, edgecolor='black', linewidth=1, width=0.15)
+    
+    # Add error bars if std is provided
+    if std is not None:
+        ax.errorbar(x, means, yerr=std, fmt='none', color='black', capsize=0)
+    
+    # Customize the plot
+    ax.set_ylabel(ylabel, fontsize=18)
+    ax.set_title(title, fontsize=20) if title else None
+    ax.set_xticks(x)
+    ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=18)
+    
+    # Set y-axis limits and ticks
+    ax.set_ylim(0, 1.1)
+    ax.set_yticks(np.arange(0, 1.01, 0.2))
+    
+    # Add black border to all spines
+    for spine in ['left', 'right', 'bottom', 'top']:
+        ax.spines[spine].set_color('black')
+        ax.spines[spine].set_linewidth(1)
+    
+    # Remove grid
+    ax.grid(False)
+    
+    # Set background color to white
+    ax.set_facecolor('white')
+    fig.patch.set_facecolor('white')
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save the plot if a save path is provided
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    # Show the plot
+    plt.show()
+
 def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg_loc=None, save_path=None, title=None, std=None):
     """
     Plots the decision probability of going towards a terminal state for three different revaluation scenarios
