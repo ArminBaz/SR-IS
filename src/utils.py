@@ -427,12 +427,13 @@ def test_agent(agent, policy="greedy", state=None, seed=None):
     if seed is not None:
         agent.env.reset(seed=seed, options={})
         np.random.seed(seed)
+    
     if state is None:
         state = agent.start_loc
 
     # set the start and agent location
     agent.env.unwrapped.start_loc, agent.env.unwrapped.agent_loc = state, state
-    # print(f"Starting in state: {state}")
+    
     steps = 0
     done = False
     while not done:
@@ -444,10 +445,8 @@ def test_agent(agent, policy="greedy", state=None, seed=None):
         obs, _, done, _, _ = agent.env.step(action)
         next_state = obs["agent"]
         traj.append(next_state)
-        # print(f"Took action: {action} and arrived in state: {next_state}")
 
         steps += 1
         state = next_state
-    # print(f"Took {steps} steps")
 
     return traj
