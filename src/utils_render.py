@@ -151,7 +151,7 @@ def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_p
     plt.rcParams['font.family'] = 'serif'
     
     # Create the plot
-    fig, ax = plt.subplots(figsize=(6, 7))
+    fig, ax = plt.subplots(figsize=(5, 6))
     x = np.arange(len(means)) * 0.25
     
     # Plot the bars with black edge color
@@ -218,7 +218,7 @@ def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg
     # Calculate positions for each group of bars
     indices = np.arange(3) * (num_states * (bar_width + state_spacing) + group_spacing)
     
-    plt.figure(figsize=(16, 6))
+    plt.figure(figsize=(14, 5))
 
     # Plot bars for each revaluation type
     for i in range(num_states):
@@ -240,12 +240,12 @@ def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg
     else:
         plt.legend(handles, [f'State {i+1}' for i in range(num_states)], title='States', loc='upper right', fontsize=12, title_fontsize=14)
 
-    plt.xlabel('Revaluation Type', fontsize=18, labelpad=20)  # Increased labelpad for more space
+    # plt.xlabel('Revaluation Type', fontsize=18, labelpad=20)  # Increased labelpad for more space
     plt.ylabel('Probabilities', fontsize=18)
     plt.title(title if title else 'Decision Probabilities Across Revaluations', fontsize=22, pad=20)
     
     # Set x-ticks to be in the middle of the grouped bars
-    plt.xticks(indices + (num_states - 1) * (bar_width + state_spacing) / 2, ['Reward Revaluation', 'Policy Revaluation', 'Transition Revaluation'], fontsize=16)
+    plt.xticks(indices + (num_states - 1) * (bar_width + state_spacing) / 2, ['Reward Revaluation', 'Policy Revaluation', 'Transition Revaluation'], fontsize=18)
 
     # Set custom y-axis ticks
     max_prob = max(max(probs_reward), max(probs_policy), max(probs_transition))
