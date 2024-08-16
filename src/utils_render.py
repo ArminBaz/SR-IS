@@ -87,6 +87,7 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
         title (string, Optional) : Title of the figure
         std (list [std_train, std_test], Optional) : Std deviations for both training and test
     """
+    plt.rcParams['font.family'] = 'serif'
     color_palette = sns.color_palette("colorblind")
     color_list = []
     for color in colors:
@@ -110,18 +111,16 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     else:
         plt.legend(handles, [f'State {i+1}' for i in range(len(probs_train))], title='States', loc='upper right')
     
-    plt.ylabel('Probabilities')
-    plt.xticks([0.2, 1.7], ['Training', 'Test'])
+    plt.ylabel('Probabilities', fontsize=18)
+    plt.xticks([0.2, 1.7], ['Training', 'Test'], fontsize=18)
 
     # Set custom y-axis ticks
     max_prob = max(max(probs_train), max(probs_test))
     y_ticks = np.arange(0, max_prob + 0.1, 0.1)
     plt.yticks(y_ticks)
 
-    plt.rcParams['font.family'] = 'serif'
-
     if title is not None:
-        plt.title(title)
+        plt.title(title, fontsize=20)
 
     # Save the image
     if save_path is not None:
