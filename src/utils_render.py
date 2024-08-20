@@ -74,6 +74,59 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
+def render_maze_dc(maze, save_path=None, title=None):
+    """
+    Renders the mazes for the De Cothi tasks
+
+    Args:
+        maze (array) : The structure of the maze (open sapce = 0, wall = -1, starting loc = 1-10)
+        save_path (string, Optional) : Where to save the image
+        title (string, Optional) : The title of the plot
+    """
+    fig, ax = plt.subplots()
+    
+    # Preprocess the maze for grayscale representation
+    maze_gray = np.zeros_like(maze, dtype=float)
+    maze_gray[maze == -1] = 1  # Barriers become black
+    maze_gray[maze == 0] = 0   # Open paths become white
+    maze_gray[maze > 0] = 0    # Treat reward locations as open paths for now
+    
+    # Plot the base maze
+    ax.imshow(maze_gray, origin='upper', cmap='gray_r')
+
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, len(maze), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(maze), 1), minor=True)
+
+    ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
+    
+    # Hide tick labels
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    # Hide tick marks
+    ax.tick_params(which='both', size=0)
+
+    # Add colored squares for starting locations and green square
+    for i in range(maze.shape[0]):
+        for j in range(maze.shape[1]):
+            if 1 <= maze[i, j] <= 10:
+                rect = patches.Rectangle((j-0.5, i-0.5), 1, 1, fill=True, facecolor='blue', alpha=0.7)
+                ax.add_patch(rect)
+                ax.text(j, i, str(int(maze[i, j])), ha='center', va='center', color='white', fontweight='bold', fontsize=10)
+    
+    # Add green square at (3,3)
+    rect = patches.Rectangle((3-0.5, 3-0.5), 1, 1, fill=True, facecolor='green', alpha=0.7)
+    ax.add_patch(rect)
+
+    # Title
+    if title is not None:
+        plt.title(title, fontsize=18)
+
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
 def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, std=None):
     """
     Plots the decision probability of going towards a terminal state
