@@ -29,8 +29,11 @@ python src/main.py
 
 ## Notebooks
 Each notebook contains the simulations to generate the figures in the paper.
-### Figure 1
-Figure
-### Figure 2
-Figure 
-### Figure 3
+* Figure 1 - `occupancy_map.ipynb`
+* Figure 2 - 2d. `convergence.ipynb`, 2e/f. `complex_maze.ipynb`
+* Figure 3 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
+* Figure 4 - `de-cothi-analysis/`
+* Figure 5 - `reval_nhb.ipynb`
+* Figure 6 - `reval_nhb.ipynb`
+* Figure S1 - `de-cothi-analysis/`
+* Figure S2 - `reval_maze.ipynb`
