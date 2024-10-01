@@ -1,8 +1,8 @@
 # LinearRL - Python Implementation
-This repository is a Python implementation of ["Linear reinforcement learning in planning, grid fields, and cognitive control"](https://www.nature.com/articles/s41467-021-25123-3) by Piray et al.
+This repository is the code accompanying ["Linear reinforcement learning in planning, grid fields, and cognitive control"](https://www.nature.com/articles/s41467-021-25123-3).
 
 ## Introduction
-
+Everything should be self-contained inside of this repo. If you have any troubles running the code or if you have any quesstions you can reach out to me via email or make a GitHub issue.
 
 ## Usage
 ### Conda Environment
@@ -28,7 +28,7 @@ python src/main.py
 ```
 
 ## Notebooks
-Each notebook contains the simulations to generate the figures in the paper.
+Each notebook contains the simulations to generate the figures in the paper all the notebooks can be found in `src/`.
 * Figure 1 - `occupancy_map.ipynb`
 * Figure 2 - 2d. `convergence.ipynb`, 2e/f. `complex_maze.ipynb`
 * Figure 3 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
