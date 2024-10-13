@@ -133,3 +133,16 @@ register(
     entry_point="gym_env.envs:MazeEnv15x15_G1",
     max_episode_steps=2000,
 )
+
+# Open Field
+register(
+    id="open-field-no-goal",
+    entry_point="gym_env.envs:MazeEnvOpenFieldNoGoal",
+    max_episode_steps=2000,
+)
+
+register(
+    id="open-field-center-goal",
+    entry_point="gym_env.envs:MazeEnvOpenFieldCenterGoal",
+    max_episode_steps=2000,
+)

@@ -392,6 +392,14 @@ class MazeEnv10x10_G3(MazeEnv):
     def __init__(self):
         super(MazeEnv10x10_G3, self).__init__(maze_file="maze_10x10_G3.npy")
 
+class MazeEnvOpenFieldNoGoal(MazeEnv):
+    def __init__(self):
+        super(MazeEnvOpenFieldNoGoal, self).__init__(maze_file="open_field_no_goal.npy")
+
+class MazeEnvOpenFieldCenterGoal(MazeEnv):
+    def __init__(self):
+        super(MazeEnvOpenFieldCenterGoal, self).__init__(maze_file="open_field_center_goal.npy")
+
 if __name__ == '__main__':
     # Test it out
     env = MazeEnv(maze_file="tolman_latent.npy", render_mode='human')
