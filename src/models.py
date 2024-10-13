@@ -669,7 +669,7 @@ class SR_TD:
         num_steps (int) : Number of training steps
         policy (string) : Decision policy
     """
-    def __init__(self, env_name, reward=-0.2, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random"):
+    def __init__(self, env_name, reward=1, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random"):
         self.env = gym.make(env_name)
         self.start_loc = self.env.unwrapped.start_loc
         self.target_locs = self.env.unwrapped.target_locs
