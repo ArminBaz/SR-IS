@@ -146,3 +146,10 @@ register(
     entry_point="gym_env.envs:MazeEnvOpenFieldCenterGoal",
     max_episode_steps=2000,
 )
+
+# Carpenter et al. (2015) maze
+register(
+    id="carpenter",
+    entry_point="gym_env.envs:MazeEnvCarpenter",
+    max_episode_steps=2000,
+)
