@@ -660,16 +660,14 @@ class SR_TD:
     SR-TD agent for maze environments
 
     Args:
-        reward (float) : The reward to make states (has effect on gamma)
+        reward (float) : The reward to make states
         term_reward (float) : The reward at the terminal state
         alpha (float) : Learning rate
+        gamma (float) : Discount parameter
         beta (float) : Temperature parameter
         _lambda (float) : Lambda value that downweights the rewards
         num_steps (int) : Number of training steps
         policy (string) : Decision policy
-        imp_samp (bool) : Whether or not to use importance sampling
-        decay (bool) : Whether or not to use learning rate decay
-        decay_params (list) : decay parameters (decay_rate, decay_steps)
     """
     def __init__(self, env_name, reward=-0.2, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random"):
         self.env = gym.make(env_name)
