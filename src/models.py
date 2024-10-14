@@ -206,13 +206,10 @@ class LinearRL:
         # Set the seeds
         self.env.reset(seed=seed, options={})
         np.random.seed(seed)
-
+        self.Z[self.terminals] = self.expr_t
+        
         # Iterate through number of steps
         for i in range(self.num_steps):
-            # Update terminal state information after 2 steps
-            if i == 2:
-                self.Z[self.terminals] = self.expr_t
-
             # Current state
             state = self.env.unwrapped.agent_loc
             state_idx = self.mapping[(state[0], state[1])]
