@@ -147,6 +147,19 @@ register(
     max_episode_steps=2000,
 )
 
+# Open field large
+register(
+    id="open-field-no-goal-large",
+    entry_point="gym_env.envs:MazeEnvOpenFieldNoGoalLarge",
+    max_episode_steps=2000,
+)
+
+register(
+    id="open-field-center-goal-large",
+    entry_point="gym_env.envs:MazeEnvOpenFieldCenterGoalLarge",
+    max_episode_steps=2000,
+)
+
 # Carpenter et al. (2015) maze
 register(
     id="carpenter",

@@ -400,6 +400,14 @@ class MazeEnvOpenFieldCenterGoal(MazeEnv):
     def __init__(self):
         super(MazeEnvOpenFieldCenterGoal, self).__init__(maze_file="open_field_center_goal.npy")
 
+class MazeEnvOpenFieldNoGoalLarge(MazeEnv):
+    def __init__(self):
+        super(MazeEnvOpenFieldNoGoalLarge, self).__init__(maze_file="open_field_no_goal_large.npy")
+
+class MazeEnvOpenFieldCenterGoalLarge(MazeEnv):
+    def __init__(self):
+        super(MazeEnvOpenFieldCenterGoalLarge, self).__init__(maze_file="open_field_center_goal_large.npy")
+
 class MazeEnvCarpenter(MazeEnv):
     def __init__(self):
         super(MazeEnvCarpenter, self).__init__(maze_file="carpenter_maze.npy")
