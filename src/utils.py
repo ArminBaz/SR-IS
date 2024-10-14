@@ -230,7 +230,7 @@ def get_transition_matrix_nb(env, size, mapping):
 
 def get_transition_matrix(env, mapping):
     """
-    Creates a block -> block transition matrix. This means the transition matrix *includes* blocks that are inacessible
+    Creates a state -> state transition matrix.
     """
     maze = env.unwrapped.maze
 
