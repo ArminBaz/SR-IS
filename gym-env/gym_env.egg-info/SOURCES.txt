@@ -8,6 +8,7 @@ gym_env.egg-info/requires.txt
 gym_env.egg-info/top_level.txt
 gym_env/envs/__init__.py
 gym_env/envs/maze_env.py
+gym_env/envs/maze_files/carpenter_maze.npy
 gym_env/envs/maze_files/four_room_br.npy
 gym_env/envs/maze_files/four_room_tr.npy
 gym_env/envs/maze_files/hairpin_14x14.npy
@@ -23,6 +24,10 @@ gym_env/envs/maze_files/maze_15x15_G1.npy
 gym_env/envs/maze_files/maze_15x15_new_goal.npy
 gym_env/envs/maze_files/maze_5x5_2g.npy
 gym_env/envs/maze_files/maze_7x7_2g.npy
+gym_env/envs/maze_files/open_field_center_goal.npy
+gym_env/envs/maze_files/open_field_center_goal_large.npy
+gym_env/envs/maze_files/open_field_no_goal.npy
+gym_env/envs/maze_files/open_field_no_goal_large.npy
 gym_env/envs/maze_files/tolman_10x10_latent.npy
 gym_env/envs/maze_files/tolman_10x10_latent_new_goal.npy
 gym_env/envs/maze_files/tolman_9x9_v0.npy
