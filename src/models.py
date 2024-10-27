@@ -5,9 +5,9 @@ import gym_env
 from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_nhb_exp_SR, gen_two_step, exponential_decay
 
 
-class LinearRL:
+class SR_IS:
     """
-    LinearRL-TD agent for maze environments
+    SR-IS agent for maze environments
 
     Args:
         reward (float) : The reward to make states (has effect on gamma)
