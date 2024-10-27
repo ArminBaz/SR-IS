@@ -96,19 +96,19 @@ register(
 
 # Four room task
 register(
-    id="four_room_tr",
+    id="four-room-tr",
     entry_point="gym_env.envs:MazeEnv4RoomTR",
     max_episode_steps=2000,
 )
 
 register(
-    id="four_room_br",
+    id="four-room-br",
     entry_point="gym_env.envs:MazeEnv4RoomBR",
     max_episode_steps=2000,
 )
 
 register(
-    id="four_room_ng",
+    id="four-room-ng",
     entry_point="gym_env.envs:MazeEnv4RoomNG",
     max_episode_steps=2000,
 )
