@@ -368,6 +368,10 @@ class MazeEnv4RoomBR(MazeEnv):
     def __init__(self):
         super(MazeEnv4RoomBR, self).__init__(maze_file="four_room_br.npy")
 
+class MazeEnv4RoomNG(MazeEnv):
+    def __init__(self):
+        super(MazeEnv4RoomNG, self).__init__(maze_file="four_room_ng.npy")
+
 class MazeEnv15x15_G0(MazeEnv):
     def __init__(self):
         super(MazeEnv15x15_G0, self).__init__(maze_file="maze_15x15_G0.npy")

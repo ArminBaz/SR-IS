@@ -107,6 +107,12 @@ register(
     max_episode_steps=2000,
 )
 
+register(
+    id="four_room_ng",
+    entry_point="gym_env.envs:MazeEnv4RoomNG",
+    max_episode_steps=2000,
+)
+
 # 15x15
 register(
     id="simple-15x15",
