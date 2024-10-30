@@ -113,6 +113,12 @@ register(
     max_episode_steps=2000,
 )
 
+register(
+    id="four-room-sg",
+    entry_point="gym_env.envs:MazeEnv4RoomSG",
+    max_episode_steps=2000,
+)
+
 # 15x15
 register(
     id="simple-15x15",
