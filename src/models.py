@@ -232,11 +232,12 @@ class SR_IS:
         self.V = np.round(np.log(self.Z), 2)
 
 
-class LinearRL_NHB:
+class SR_IS_NHB:
     def __init__(self, alpha=0.25, beta=10, _lambda=10, epsilon=0.4, num_steps=25000, policy="softmax", imp_samp=True, exp_type="policy_reval"):
         # Hard code start and end locations as well as size
         self.start_loc = 0
         self.target_locs = [3,4,5]
+        self.start_locs = [0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 0, 0, 1, 2, 1, 2, 3, 4, 5, 0, 0, 1, 0, 0, 2, 3, 1, 4, 2, 5, 0, 1, 2, 0]
         self.size = 9
         self.agent_loc = self.start_loc
         self.exp_type = exp_type
@@ -404,6 +405,52 @@ class LinearRL_NHB:
         D_inv = np.linalg.inv(I-self.gamma*self.T)
 
         return D_inv
+    
+    def learn_with_start_locs(self, seed=None):
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        self.Z[self.terminals] = self.expr_t
+
+        for start_loc in self.start_locs:
+            self.agent_loc = start_loc
+
+            while True:
+                state = self.agent_loc
+                # Choose action
+                if self.policy == "softmax":
+                    action, s_prob = self.select_action(state)
+                else:
+                    action = self.select_action(state)
+            
+                # Take action
+                next_state, done = self.envstep[state, action]
+                
+                # Importance sampling
+                if self.imp_samp:
+                    w = self.importance_sampling(state, s_prob)
+                    w = 1 if np.isnan(w) or w == 0 else w
+                else:
+                    w = 1
+                
+                # Update default representation
+                target = self.one_hot[state] + self.gamma * self.DR[next_state]
+                self.DR[state] = (1 - self.alpha) * self.DR[state] + self.alpha * target * w
+
+                # Update Z-Values
+                self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
+                
+                if done:
+                    break
+
+                # Update state
+                state = next_state
+                self.agent_loc = state
+
+        # Update Z and V values
+        self.update_Z()
+        self.update_V()
+
 
     def learn(self, seed=None):
         """
@@ -808,6 +855,7 @@ class SR_NHB:
         # Hard code start and end locations as well as size
         self.start_loc = 0
         self.target_locs = [3,4,5]
+        self.start_locs = [0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 0, 0, 1, 2, 1, 2, 0, 0, 1, 0, 0, 2, 1, 2, 0, 1, 2, 0]
         self.size = 6
         self.agent_loc = self.start_loc
         self.exp_type = exp_type
@@ -897,6 +945,36 @@ class SR_NHB:
             action = np.random.choice([0,1], p=action_probs)
 
             return action
+    
+    def learn_with_start_locs(self, seed=None):
+        if seed is not None:
+            np.random.seed(seed=seed)
+        
+        for start_loc in self.start_locs:
+            self.agent_loc = start_loc
+            done = False
+
+            while True:
+                state = self.agent_loc
+                action = self.select_action(state)
+
+                # Take action
+                next_state, done = self.envstep[state, action]
+
+                # Update SR
+                self.SR[state] = (1-self.alpha)* self.SR[state] + self.alpha * ( self.one_hot[state] + self.gamma * self.SR[next_state]  )
+
+                # Update Values
+                self.update_V()
+
+                if done:
+                    break
+
+                # Update state
+                state = next_state
+                self.agent_loc = state
+
+        self.update_V()
 
     def learn(self, seed=None):
         """
