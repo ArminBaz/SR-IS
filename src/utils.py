@@ -322,7 +322,7 @@ def decision_policy_SR(agent):
             T_pi[state_idx, new_state_idx] += prob
 
     T_pi[agent.terminals, agent.terminals] = 1
-    
+
     return T_pi
         
 def gen_nhb_exp():
