@@ -454,7 +454,7 @@ def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
             steps += 1
             state = next_state
 
-            if done and (np.all(next_state == term_state)):
+            if np.all(next_state == term_state):
                 break
     
     # Else
