@@ -203,7 +203,7 @@ def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_p
     plt.rcParams['font.family'] = 'serif'
     
     # Create the plot
-    fig, ax = plt.subplots(figsize=(5, 6))
+    fig, ax = plt.subplots(figsize=(7, 8))
     x = np.arange(len(means)) * 0.25
     
     # Plot the bars with black edge color

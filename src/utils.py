@@ -276,7 +276,7 @@ def get_full_maze_values(agent):
             if agent.maze[row, col] == "1":
                 v_maze[row,col] = -np.inf
                 continue
-            v_maze[row,col] = agent.V[agent.mapping[(row,col)]]
+            v_maze[row,col] = np.round(agent.V[agent.mapping[(row,col)]], 2)
     
     return v_maze
 
@@ -320,6 +320,8 @@ def decision_policy_SR(agent):
             new_state_idx = agent.mapping[(new_state[0], new_state[1])]
             prob = ( agent.V[new_state_idx] / agent.beta ) / v_sum
             T_pi[state_idx, new_state_idx] += prob
+
+    T_pi[agent.terminals, agent.terminals] = 1
     
     return T_pi
         
@@ -407,7 +409,7 @@ def gen_two_step():
     
     return envstep
 
-def test_agent(agent, policy="greedy", state=None, seed=None):
+def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
     """
     Function to test the agent
 
@@ -415,6 +417,7 @@ def test_agent(agent, policy="greedy", state=None, seed=None):
         agent (LinearRL class) : The LinearRL agent
         policy (string) : Which policy to use, default is greedy
         state (tuple) : The starting state, default is none which sets the agent at the starting state of the maze
+        term_state (tuple) : Check if we reach a specific terminal state
     
     Returns:
         traj (list) : The list of states the agent chooses
@@ -435,18 +438,41 @@ def test_agent(agent, policy="greedy", state=None, seed=None):
     agent.env.unwrapped.start_loc, agent.env.unwrapped.agent_loc = state, state
     
     steps = 0
-    done = False
-    while not done:
-        if policy == "softmax":
-            action, _ = agent.select_action(state)
-        else:
-            action = agent.select_action(state)
 
-        obs, _, done, _, _ = agent.env.step(action)
-        next_state = obs["agent"]
-        traj.append(next_state)
+    # If we are checking for a specific terminal state
+    if term_state is not None:
+        while True:
+            if policy == "softmax":
+                action, _ = agent.select_action(state)
+            else:
+                action = agent.select_action(state)
 
-        steps += 1
-        state = next_state
+            obs, _, done, _, _ = agent.env.step(action)
+            next_state = obs["agent"]
+            traj.append(next_state)
+
+            steps += 1
+            state = next_state
+
+            if done and (np.all(next_state == term_state)):
+                break
+    
+    # Else
+    else:
+        while True:
+            if policy == "softmax":
+                action, _ = agent.select_action(state)
+            else:
+                action = agent.select_action(state)
+
+            obs, _, done, _, _ = agent.env.step(action)
+            next_state = obs["agent"]
+            traj.append(next_state)
+
+            steps += 1
+            state = next_state
+
+            if done:
+                break
 
     return traj

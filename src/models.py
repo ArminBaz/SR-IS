@@ -198,6 +198,7 @@ class SR_IS:
 
         # Update Z-Values
         self.Z = self.DR[:,~self.terminals] @ self.P @ self.expr_t
+        # self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
 
     def learn(self, seed=None):
         """
@@ -228,12 +229,12 @@ class SR_IS:
             state = next_state
 
         # Update DR at terminal state
-        self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)
-        self.V = np.round(np.log(self.Z), 2)
+        # self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)
+        self.update_V()
 
 
 class SR_IS_NHB:
-    def __init__(self, alpha=0.25, beta=10, _lambda=10, epsilon=0.4, num_steps=25000, policy="softmax", imp_samp=True, exp_type="policy_reval"):
+    def __init__(self, alpha=0.25, beta=10, _lambda=10, epsilon=0.4, num_steps=250, policy="softmax", imp_samp=True, exp_type="policy_reval"):
         # Hard code start and end locations as well as size
         self.start_loc = 0
         self.target_locs = [3,4,5]
@@ -503,9 +504,9 @@ class SR_IS_NHB:
         self.update_V()
 
 
-class LinearRL_TwoStep:
+class SR_IS_TwoStep:
     """
-    LinearRL-TD agent specifically desinged for the two-step task
+    SR-IS agent specifically desinged for the two-step task
 
     Args:
         alpha (float) : Learning rate
@@ -557,11 +558,21 @@ class LinearRL_TwoStep:
         Manually construt the transition matrix
         """
         # For two-step task
+        # T = np.zeros((7, 7))
+        # T[0, 1:3] = [.5, .5]
+        # T[1, 3:5] = .5
+        # T[2, 5:7] = .5
+        # T[3:7, 3:7] = np.eye(4)
+
+        # return T
         T = np.zeros((7, 7))
-        T[0, 1:3] = [.5, .5]
-        T[1, 3:5] = .5
-        T[2, 5:7] = .5
-        T[3:7, 3:7] = np.eye(4)
+        # First stage transitions
+        T[0, 1:3] = [0.5, 0.5]
+        # Second stage transitions
+        T[1, 3:5] = [0.5, 0.5]
+        T[2, 5:7] = [0.5, 0.5]
+        # Terminal states
+        T[3:, 3:] = np.eye(4)
 
         return T
     
@@ -569,9 +580,18 @@ class LinearRL_TwoStep:
         """
         Manually construct the reward vector
         """
-        r = np.full((7, 2), self.reward)
-        r[4, 0] = +.25
-        r[4, 1] = -.25
+        # r = np.full((7, 2), self.reward)
+        # r[4, 0] = +.25
+        # r[4, 1] = -.25
+
+        # return r
+    
+        r0 = 0
+        r = np.array([
+            0, 0, 0,           # First 3 states (no rewards)
+            r0, 0.25,     # Rewards from state 1's actions
+            r0, r0   # Rewards from state 2's actions
+        ])
 
         return r
 
@@ -648,6 +668,7 @@ class LinearRL_TwoStep:
             s_prob = action_probs[action]
 
             return action, s_prob
+        
     def learn(self, r_idx=0):
         """
         Agent explores the maze according to its decision policy and and updates its DR as it goes
@@ -744,7 +765,9 @@ class SR_TD:
         self.policy = policy
 
         # Model
-        self.SR = np.eye(self.size)
+        self.SR = np.random.uniform(0, 0.1, (self.size, self.size))
+        np.fill_diagonal(self.SR, 1)
+        # self.SR = np.eye(self.size)
         self.V = np.zeros(self.size)
         self.one_hot = np.eye(self.size)
 
@@ -819,6 +842,9 @@ class SR_TD:
         """
         # Update successor representation
         self.SR[state_idx] = (1 - self.alpha) * self.SR[state_idx] + self.alpha * (self.one_hot[state_idx] + self.gamma * self.SR[next_state_idx])
+
+        # Ensure SR values stay reasonable
+        self.SR = np.clip(self.SR, 0, 1/(1-self.gamma))
 
         # Update Values
         self.update_V()
@@ -909,6 +935,42 @@ class SR_NHB:
 
         return T
     
+    def construct_T_new(self):
+        """
+        Manually construct a new transition matrix for the transition revaluation problem
+        """
+        T = np.zeros((6, 6))
+        T[0, 1:3] = 0.5
+        T[1, 4:6] = 0.5
+        T[2, 3:5] = 0.5
+        T[3:6, 3:6] = np.eye(3)
+
+        return T
+    
+    def gen_new_envstep(self):
+        """
+        Defines the environment for the Nature Human Behavior experiment introduced by Momennejad et al.
+        """
+        envstep=[]
+        for s in range(6):
+            # actions 0=left, 1=right
+            envstep.append([[0,0], [0,0]])  # [s', done]
+        envstep = np.array(envstep)
+
+        # State 0 -> 1, 2
+        envstep[0,0] = [1,0]
+        envstep[0,1] = [2,0]
+
+        # State 1 -> 4, 5
+        envstep[1,0] = [4,1]
+        envstep[1,1] = [5,1]
+
+        # State 2 -> 3, 4
+        envstep[2,0] = [3,1]
+        envstep[2,1] = [4,1]
+        
+        return envstep
+    
     def update_exp(self):
         """
         Update the terminal state values or transition matrix (experiment dependent)
@@ -946,6 +1008,26 @@ class SR_NHB:
 
             return action
     
+    def decision_policy_SR(self):
+        """
+        Computes the SR decision policy, which acts as T^pi
+        """
+        T_pi = np.zeros_like(self.T)
+
+        for state in [0,1,2]:
+            # Get next states
+            next_states = self.envstep[state][:,0]
+            # Calculate softmax probabilities
+            exp_values = np.exp(self.V[next_states] / self.beta)
+            probs = exp_values / np.sum(exp_values)
+            # Use probs to fill T_pi
+            for i, next_state in enumerate(next_states):
+                T_pi[state,next_state] += probs[i]
+
+        T_pi[self.terminals, self.terminals] = 1
+        
+        return T_pi
+
     def learn_with_start_locs(self, seed=None):
         if seed is not None:
             np.random.seed(seed=seed)
@@ -973,6 +1055,34 @@ class SR_NHB:
                 # Update state
                 state = next_state
                 self.agent_loc = state
+
+        self.update_V()
+    
+    def learn_trans_reval(self, seed=None):
+        # update T and envstep
+        T_new = self.construct_T_new()
+        new_envstep = self.gen_new_envstep()
+
+        self.envstep = new_envstep
+        self.T = T_new
+
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        # 3 times from state 1 and state 2
+        for start_loc in [1, 2]:
+            self.agent_loc = start_loc
+            state = self.agent_loc
+            action = self.select_action(state)
+
+            # Take action
+            next_state, done = new_envstep[state, action]
+
+            # Update SR
+            self.SR[state] = (1-self.alpha) * self.SR[state] + self.alpha * ( self.one_hot[state] + self.gamma * self.SR[next_state]  )
+
+            # Update Values
+            self.update_V()
 
         self.update_V()
 
