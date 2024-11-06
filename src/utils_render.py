@@ -74,6 +74,62 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
+def render_maze_replan(agent, state=None, initial_goal=None, replan_goals=None, ax=None, save_path=None):
+    """
+    Renders the maze
+
+    Args:
+        agent (LinearRL class) : The agent
+        state (tuple/array, Optional) : The state to draw the agent in, if None will use starting location
+        initial_gaol (tuple, Optional) : 
+        replan_goals (list of tuples) : 
+        colors (list of color idxs, Optional) : The specific idx of colors to use from the colorblind color palette
+        wall (list, Optional) : List containing two sublists for wall coordinates [[row1, row2], [col1, col2]]
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    m = get_map(agent)
+
+    if state is None:
+        state = agent.start_loc
+    
+    if initial_goal is None:
+        initial_goal = agent.target_locs[0]
+
+    # Display maze
+    ax.imshow(m, origin='upper', cmap='gray_r')
+
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
+
+    ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
+    # Display agent
+    agent_loc = patches.Circle((state[1],state[0]), radius=0.4, fill=True, color='blue', alpha=0.7)
+    ax.add_patch(agent_loc)
+
+    # Display initial goal
+    reward = patches.Rectangle((initial_goal[1] - 0.5, initial_goal[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
+    ax.text(initial_goal[1], initial_goal[0], f'r{1}', color='white', fontsize=10, ha='center', va='center')
+    ax.add_patch(reward)
+
+    # Display new rewards
+    for i, goal_loc in enumerate(replan_goals, 2):
+        reward = patches.Rectangle((goal_loc[1] - 0.5, goal_loc[0] - 0.5), 1.0, 1.0, fill=True, color='purple', alpha=0.5)
+        ax.text(goal_loc[1], goal_loc[0], f'r{i}', color='white', fontsize=10, ha='center', va='center')
+        ax.add_patch(reward)
+
+    # Hide tick labels
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    # Hide tick marks
+    ax.tick_params(which='both', size=0)
+
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
 def render_maze_dc(maze, save_path=None, title=None):
     """
     Renders the mazes for the De Cothi tasks
