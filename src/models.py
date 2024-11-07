@@ -1084,7 +1084,6 @@ class SR_NHB:
             # Update Values
             self.update_V()
 
-        self.update_V()
 
     def learn(self, seed=None):
         """
