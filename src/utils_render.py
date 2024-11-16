@@ -8,7 +8,7 @@ import random
 from utils import get_map
 
 
-def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=None, wall=None):
+def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=None, wall=None, fontsize=10):
     """
     Renders the maze
 
@@ -45,14 +45,14 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     for i, target_loc in enumerate(agent.target_locs):
         # reward = patches.Circle((target_loc[1], target_loc[0]), radius=0.4, fill=True, color='green')
         reward = patches.Rectangle((target_loc[1] - 0.5, target_loc[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
-        ax.text(target_loc[1], target_loc[0], f'r{i+1}', color='white', fontsize=10, ha='center', va='center')
+        ax.text(target_loc[1], target_loc[0], f'$\mathrm{{r}}_{i+1}$', color='white', fontsize=fontsize, ha='center', va='center', style='normal')
         ax.add_patch(reward)
 
     # Color specific maze locations using Rectangle patches
     if locs is not None:
         for loc, color in zip(locs, colors):
             rect = patches.Rectangle((loc[1] - 0.5, loc[0] - 0.5), 1.0, 1.0, fill=True, color=color_palette[color])
-            ax.text(loc[1], loc[0], f's{locs.index(loc) + 1}', color='white', fontsize=10, ha='center', va='center')
+            ax.text(loc[1], loc[0], f'$\mathrm{{s}}_{locs.index(loc) + 1}$', color='white', fontsize=fontsize, ha='center', va='center')
             ax.add_patch(rect)
 
     if wall is not None:
@@ -74,7 +74,7 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
-def render_maze_replan(agent, state=None, initial_goal=None, replan_goals=None, ax=None, save_path=None):
+def render_maze_replan(agent, state=None, initial_goal=None, replan_goals=None, ax=None, save_path=None, fontsize=12):
     """
     Renders the maze
 
@@ -110,13 +110,13 @@ def render_maze_replan(agent, state=None, initial_goal=None, replan_goals=None, 
 
     # Display initial goal
     reward = patches.Rectangle((initial_goal[1] - 0.5, initial_goal[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
-    ax.text(initial_goal[1], initial_goal[0], f'r{1}', color='white', fontsize=10, ha='center', va='center')
+    ax.text(initial_goal[1], initial_goal[0], f'$\mathrm{{r}}_{1}$', color='white', fontsize=fontsize, ha='center', va='center')
     ax.add_patch(reward)
 
     # Display new rewards
     for i, goal_loc in enumerate(replan_goals, 2):
         reward = patches.Rectangle((goal_loc[1] - 0.5, goal_loc[0] - 0.5), 1.0, 1.0, fill=True, color='purple', alpha=0.5)
-        ax.text(goal_loc[1], goal_loc[0], f'r{i}', color='white', fontsize=10, ha='center', va='center')
+        ax.text(goal_loc[1], goal_loc[0], f'$\mathrm{{r}}_{i}$', color='white', fontsize=fontsize, ha='center', va='center')
         ax.add_patch(reward)
 
     # Hide tick labels
@@ -216,9 +216,9 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
 
     if leg_loc is not None:
-        plt.legend(handles, [f'State {i+1}' for i in range(len(probs_train))], title='States', loc=leg_loc)
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=12)
     else:
-        plt.legend(handles, [f'State {i+1}' for i in range(len(probs_train))], title='States', loc='upper right')
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=12)
     
     plt.ylabel('Probabilities', fontsize=18)
     plt.xticks([0.2, 1.7], ['Training', 'Test'], fontsize=18)
