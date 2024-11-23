@@ -17,10 +17,6 @@ Because we are using custom gym environments, you need to install them locally i
 pip install -e gym-env
 ```
 
-### Configuration
-To configure the code with your desired parameters you can edit the `config.yml` file in `src/`. <br>
-For example, you can change the `ENV` flag with your desired gym environment.
-
 ### Run
 To run the LinearRL model you can run `main.py` which will use LinearRL to solve for the optimal value function and optimal policy on the specified environment.
 ```bash
