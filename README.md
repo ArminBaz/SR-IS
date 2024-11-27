@@ -1,5 +1,5 @@
 # LinearRL - Python Implementation
-This repository is the code accompanying ["Linear reinforcement learning in planning, grid fields, and cognitive control"](https://www.nature.com/articles/s41467-021-25123-3).
+This repository is the code accompanying ["Armin's amazing future publication"](https://scholar.google.com/citations?user=CvlkhhwAAAAJ&hl=en).
 
 ## Introduction
 Everything should be self-contained inside of this repo. If you have any troubles running the code or if you have any quesstions you can reach out to me via email or make a GitHub issue.
@@ -17,11 +17,10 @@ Because we are using custom gym environments, you need to install them locally i
 pip install -e gym-env
 ```
 
-### Run
-To run the LinearRL model you can run `main.py` which will use LinearRL to solve for the optimal value function and optimal policy on the specified environment.
-```bash
-python src/main.py
-```
+### Code synposis
+The different models I tested can be found in `src/models.py`, the main model of interest for most readers is probably are `SR_IS` and `SR_IS_NHB`models. Note that there are two versions because one is defined to work on the tabular environments I constructed in `gym-env` while the other is designed to work on tree like environments that were used in ["Momennejad et al."](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=OFdUAJwAAAAJ&citation_for_view=OFdUAJwAAAAJ:Tyk-4Ss8FVUC).
+
+I have different notebooks, each containing different simulations that I used to construct my figures. They should be relatively easy to parse through but you can also look through the next section to determine which notebook you would like to run.
 
 ## Notebooks
 Each notebook contains the simulations to generate the figures in the paper all the notebooks can be found in `src/`.
@@ -30,6 +29,6 @@ Each notebook contains the simulations to generate the figures in the paper all 
 * Figure 3 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
 * Figure 4 - `de-cothi-analysis/`
 * Figure 5 - `reval_nhb.ipynb`
-* Figure 6 - `reval_nhb.ipynb`
 * Figure S1 - `de-cothi-analysis/`
 * Figure S2 - `reval_maze.ipynb`
+* Figure S3 - `reval_nhb.ipynb`
