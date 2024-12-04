@@ -216,9 +216,9 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
 
     if leg_loc is not None:
-        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=12)
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=14)
     else:
-        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=12)
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=14)
     
     plt.ylabel('Probabilities', fontsize=18)
     plt.xticks([0.2, 1.7], ['Training', 'Test'], fontsize=18)
