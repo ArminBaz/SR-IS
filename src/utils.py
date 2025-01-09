@@ -113,7 +113,7 @@ def policy_reval(agent):
 
     Z_new[~agent.terminals] = agent.DR[~agent.terminals][:,~agent.terminals] @ agent.P @ expr_new
     Z_new[agent.terminals] = expr_new
-    V_new = np.round(np.log(Z_new), 4)
+    V_new = np.round(np.log(Z_new), 6)
 
     return V_new, Z_new
 

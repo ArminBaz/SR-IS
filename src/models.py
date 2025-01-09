@@ -404,7 +404,7 @@ class SR_IS_NHB:
         """
         I = np.eye(self.size)
         D_inv = np.linalg.inv(I-self.gamma*self.T)
-
+        
         return D_inv
     
     def learn_with_start_locs(self, seed=None):
