@@ -10,6 +10,8 @@ gym_env/envs/__init__.py
 gym_env/envs/maze_env.py
 gym_env/envs/maze_files/carpenter_maze.npy
 gym_env/envs/maze_files/four_room_br.npy
+gym_env/envs/maze_files/four_room_ng.npy
+gym_env/envs/maze_files/four_room_sg.npy
 gym_env/envs/maze_files/four_room_tr.npy
 gym_env/envs/maze_files/hairpin_14x14.npy
 gym_env/envs/maze_files/maze2d_5x5.npy
