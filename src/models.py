@@ -234,7 +234,7 @@ class SR_IS:
 
 
 class SR_IS_NHB:
-    def __init__(self, alpha=0.25, beta=10, _lambda=10, epsilon=0.4, num_steps=250, policy="softmax", imp_samp=True, exp_type="policy_reval"):
+    def __init__(self, alpha=0.25, beta=1.0, _lambda=10, epsilon=0.4, num_steps=250, policy="softmax", imp_samp=True, exp_type="policy_reval"):
         # Hard code start and end locations as well as size
         self.start_loc = 0
         self.target_locs = [3,4,5]
