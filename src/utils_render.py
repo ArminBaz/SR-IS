@@ -337,9 +337,9 @@ def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg
     # Add error bars if std is provided
     if std is not None:
         for i in range(num_states):
-            plt.errorbar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], yerr=std[0], fmt='none', ecolor='black', capsize=0)
-            plt.errorbar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], yerr=std[1], fmt='none', ecolor='black', capsize=0)
-            plt.errorbar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], yerr=std[2], fmt='none', ecolor='black', capsize=0)
+            plt.errorbar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], yerr=std[0][i], fmt='none', ecolor='black', capsize=0)
+            plt.errorbar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], yerr=std[1][i], fmt='none', ecolor='black', capsize=0)
+            plt.errorbar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], yerr=std[2][i], fmt='none', ecolor='black', capsize=0)
 
     # Create legend for states
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(num_states)]
