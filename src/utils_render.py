@@ -344,9 +344,9 @@ def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg
     # Create legend for states
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(num_states)]
     if leg_loc is not None:
-        plt.legend(handles, [f'State {i+1}' for i in range(num_states)], title='States', loc=leg_loc, fontsize=12, title_fontsize=14)
+        plt.legend(handles, [f'State {i+2}' for i in range(num_states)], title='States', loc=leg_loc, fontsize=12, title_fontsize=14)
     else:
-        plt.legend(handles, [f'State {i+1}' for i in range(num_states)], title='States', loc='upper right', fontsize=12, title_fontsize=14)
+        plt.legend(handles, [f'State {i+2}' for i in range(num_states)], title='States', loc='upper right', fontsize=12, title_fontsize=14)
 
     # plt.xlabel('Revaluation Type', fontsize=18, labelpad=20)  # Increased labelpad for more space
     plt.ylabel('Probabilities', fontsize=18)
