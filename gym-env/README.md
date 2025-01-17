@@ -20,15 +20,4 @@ If you would like to add your own environment, make sure it fits within the way 
 
 After you have added your own environment file, make sure you construct a class instantiaion of it inside of `gym_env/envs/maze_env.py`, import the class in `gym_env/envs/__init__.py`, and register it inside of `gym_env/__intit__.py`. <br> <br>
 
-Ater you've done all this, you need to remake the pip installation of our custom gym env by running the command outlined in the previous section.
-
-## From Paper
-### 10x10 Maze
-I create a similar maze to that was used in the linear RL paper (fig 2d.)
-
-## Cognitive Neuroscience
-### Hairpin Maze
-Hairpin maze inspired by [Derdikman et al.](https://www.nature.com/articles/nn.2396)
-
-### Tolman's Detour Task
-Maze environment inspired by [Tolman's detour task ](https://psycnet.apa.org/record/1949-00103-001).
+Ater you've done all this, you need to remake the pip installation of our custom gym env by running the command outlined in the previous section to make sure the new environment is accessible.

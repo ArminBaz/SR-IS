@@ -1,5 +1,5 @@
-# LinearRL - Python Implementation
-This repository is the code accompanying ["Armin's amazing future publication"](https://scholar.google.com/citations?user=CvlkhhwAAAAJ&hl=en).
+# SR-IS - Successor Representation with Importance Sampling
+This repository is the code accompanying ["Efficient Learning of Predictive Maps for Flexible Planning"](https://osf.io/preprints/psyarxiv/ak57f).
 
 ## Introduction
 Everything should be self-contained inside of this repo. If you have any troubles running the code or if you have any quesstions you can reach out to me via email or make a GitHub issue.
@@ -25,10 +25,10 @@ I have different notebooks, each containing different simulations that I used to
 ## Notebooks
 Each notebook contains the simulations to generate the figures in the paper all the notebooks can be found in `src/`.
 * Figure 1 - `occupancy_map.ipynb`
-* Figure 2 - 2d. `convergence.ipynb`, 2e/f. `complex_maze.ipynb`
-* Figure 3 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
-* Figure 4 - `de-cothi-analysis/`
-* Figure 5 - `reval_nhb.ipynb`
-* Figure S1 - `de-cothi-analysis/`
+* Figure 2 - 2b. `convergence.ipynb`, 2c. `four_room_replan.ipynb`, 2e/f. `complex_maze.ipynb`
+* Figure 3 - `reval_nhb.ipynb`
+* Figure 4 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
+* Figure 5 - `de-cothi-analysis/`
+* Figure S1 - `reval_nhb_full.ipynb`
 * Figure S2 - `reval_maze.ipynb`
-* Figure S3 - `reval_nhb.ipynb`
+* Figure S3 - `de-cothi-analysis/`
