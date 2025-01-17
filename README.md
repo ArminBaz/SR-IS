@@ -27,7 +27,7 @@ Each notebook contains the simulations to generate the figures in the paper all 
 * Figure 1 - `occupancy_map.ipynb`
 * Figure 2 - 2b. `convergence.ipynb`, 2c. `four_room_replan.ipynb`, 2e/f. `complex_maze.ipynb`
 * Figure 3 - `reval_nhb.ipynb`
-* Figure 4 - 3c/d. `latent.ipynb`, 3g/h. `detour.ipynb`
+* Figure 4 - 4c/d. `latent.ipynb`, 4g/h. `detour.ipynb`
 * Figure 5 - `de-cothi-analysis/`
 * Figure S1 - `reval_nhb_full.ipynb`
 * Figure S2 - `reval_maze.ipynb`
