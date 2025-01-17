@@ -1,4 +1,4 @@
-# SR-IS - Successor Representation with Importance Sampling
+# SR-IS : Successor Representation with Importance Sampling
 This repository is the code accompanying ["Efficient Learning of Predictive Maps for Flexible Planning"](https://osf.io/preprints/psyarxiv/ak57f).
 
 ## Introduction
