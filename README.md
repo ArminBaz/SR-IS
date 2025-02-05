@@ -11,7 +11,7 @@ I recommend creating a conda environment for usage with this repo. Especially be
 conda env create -f env.yml
 ```
 
-The code has been tested on a MacOS (13.6.7) with python version 3.10.0
+The code has been tested on a MacOS (13.6.7) with Python (3.10.0).
 
 ### RL Environments
 Because we are using custom gym environments, you need to install them locally in order for gymansium to recognize them when we are constructing our environment variables. To install the environemnts, just run:
