@@ -1,0 +1,14 @@
+#!/bin/sh
+scriptnames="$@"
+MATLABCMD="2022a"
+WALLTIME=00:15:00
+MEM=8gb
+
+module purge
+module load matlab/${MATLABCMD}
+
+for mfile in ${scriptnames}
+do 
+sbatch -t $WALLTIME --mem=$MEM --wrap="matlab -nojvm -nodisplay -nodesktop < ${mfile}"
+sleep .05
+done
