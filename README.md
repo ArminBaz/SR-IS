@@ -6,10 +6,12 @@ Everything should be self-contained inside of this repo. If you have any trouble
 
 ## Usage
 ### Conda Environment
-I recommend creating a conda environment for usage with this repo. Especially because we will be installing some custom built environments. You can install the conda environment from the yml file I have provided.
+I recommend creating a conda environment for usage with this repo. Especially because we will be installing some custom built environments. You can install the conda environment from the yml file I have provided. Installation time can vary, but should be around 1-2 minutes.
 ```bash
 conda env create -f env.yml
 ```
+
+The code has been tested on a MacOS (13.6.7) with python version 3.10.0
 
 ### RL Environments
 Because we are using custom gym environments, you need to install them locally in order for gymansium to recognize them when we are constructing our environment variables. To install the environemnts, just run:
