@@ -2,6 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import patches
+import matplotlib.colors as mcolors
 import matplotlib.animation as manimation
 import random
 
@@ -522,3 +523,136 @@ def record_trajectory(agent, traj, save_path=None):
     # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
+def render_maze_with_DR(agent, state=None, ax=None, save_path=None, fontsize=10):
+    """
+    Renders the maze with DR values overlaid using a purple gradient.
+    Uses direct DR[state_idx][agent.mapping[(i,j)]] values.
+    No labels, title, or colorbar.
+    
+    Args:
+        agent (LinearRL class) : The agent
+        state (tuple/array, Optional) : The state to draw the agent in, if None will use starting location
+        ax (matplotlib.axes, Optional) : The axes to draw on
+        save_path (string, Optional) : Where to save the image
+        fontsize (int, Optional) : Font size for text elements
+    """
+    
+    if ax is None:
+        fig, ax = plt.subplots()
+    
+    m = get_map(agent)
+    
+    if state is None:
+        state = agent.start_loc
+    
+    # Display maze base layer
+    ax.imshow(m, origin='upper', cmap='gray_r')
+    
+    # Minor ticks
+    ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
+    ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
+    
+    ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
+    
+    # Get current state index
+    state_idx = agent.mapping[(state[0], state[1])]
+    
+    # Get all DR values for current state
+    dr_values = []
+    valid_positions = []
+    
+    # Collect valid DR values for normalization
+    for i in range(len(m)):
+        for j in range(len(m[0])):
+            if m[i][j] == 0 and (i, j) in agent.mapping:
+                target_idx = agent.mapping[(i, j)]
+                dr_value = agent.DR[state_idx][target_idx]
+                dr_values.append(dr_value)
+                valid_positions.append((i, j))
+    
+    # Get min/max for normalization
+    dr_min = min(dr_values) if dr_values else 0
+    dr_max = max(dr_values) if dr_values else 1
+    
+    # Create deep purple colormap
+    deep_purple = mcolors.to_rgba('#6A0DAD')  # Deep purple for high values
+    mid_purple = mcolors.to_rgba('#9370DB')   # Medium purple for mid values
+    light_purple = mcolors.to_rgba('#D8BFD8')  # Light purple for low values
+    white = mcolors.to_rgba('white')
+    
+    # Create custom colormap with non-linear gradient
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        'enhanced_purple', 
+        [white, mid_purple, deep_purple], 
+        N=256
+    )
+    
+    # Apply power transformation to emphasize lower values
+    power = 0.8  # Value < 1 makes lower values appear stronger
+    
+    # Overlay DR values with stronger colors for all values
+    for i, j in valid_positions:
+        target_idx = agent.mapping[(i, j)]
+        dr_value = agent.DR[state_idx][target_idx]
+        
+        # Normalize DR value
+        if dr_max > dr_min:
+            normalized_dr = (dr_value - dr_min) / (dr_max - dr_min)
+        else:
+            normalized_dr = 0.5
+        
+        # Apply power transformation to emphasize lower values
+        transformed_dr = normalized_dr ** power
+        
+        # Get color from our custom colormap
+        color = cmap(transformed_dr)
+        
+        # Create rectangle overlay with solid color (no transparency)
+        rect = patches.Rectangle(
+            (j - 0.5, i - 0.5), 
+            1.0, 
+            1.0, 
+            fill=True, 
+            color=color,
+            alpha=0.8  # Fixed fairly high alpha for better visibility
+        )
+        ax.add_patch(rect)
+    
+    # Display agent
+    agent_loc = patches.Circle((state[1], state[0]), radius=0.4, fill=True, color='blue', alpha=0.9)
+    ax.add_patch(agent_loc)
+    
+    # Display Reward
+    for i, target_loc in enumerate(agent.target_locs):
+        reward = patches.Rectangle(
+            (target_loc[1] - 0.5, target_loc[0] - 0.5), 
+            1.0, 
+            1.0, 
+            fill=True, 
+            color='green', 
+            alpha=0.9
+        )
+        ax.text(
+            target_loc[1], 
+            target_loc[0], 
+            f'$\mathrm{{r}}_{i+1}$', 
+            color='white', 
+            fontsize=fontsize, 
+            ha='center', 
+            va='center'
+        )
+        ax.add_patch(reward)
+    
+    # Hide tick labels
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    
+    # Hide tick marks
+    ax.tick_params(which='both', size=0)
+    
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+    
+    return ax
