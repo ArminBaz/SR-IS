@@ -656,3 +656,16 @@ def render_maze_with_DR(agent, state=None, ax=None, save_path=None, fontsize=10)
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
     
     return ax
+
+def pretty_print_values(agent):
+    """
+    Prints the values of the maze all pretty and stuff
+    
+    Args:
+        agent (SR_IS class) : The agent
+        state (tuple/array, Optional) : The state to draw the agent in, if None will use starting location
+        ax (matplotlib.axes, Optional) : The axes to draw on
+        save_path (string, Optional) : Where to save the image
+        fontsize (int, Optional) : Font size for text elements
+    """
+    
