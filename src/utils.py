@@ -301,6 +301,17 @@ def decision_policy(agent, Z):
 
     return pii
 
+def softmax(x, temperature=1.0):
+    """
+    Compute the softmax of a vector with inverse temperature scaling.
+    """
+    x_temp = x / temperature
+    # Numerical stability
+    x_shifted = x_temp - np.max(x_temp)
+    exp_x = np.exp(x_shifted)
+
+    return exp_x / np.sum(exp_x)
+
 def decision_policy_SR(agent):
     """
     Computes the SR decision policy, which acts as T^pi
