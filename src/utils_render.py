@@ -206,6 +206,13 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     bar_positions_training = np.arange(len(probs_train)) * 0.4
     bar_positions_test = np.arange(len(probs_train)) * 0.4 + 1.5
 
+    # Minimum height if small prob
+    probs_train = np.array(probs_train)
+    probs_test = np.array(probs_test)
+    min_visible_height = 0.02
+    probs_train[probs_train < 0.05] = min_visible_height
+    probs_test[probs_test < 0.05] = min_visible_height
+
     plt.bar(bar_positions_training, probs_train, width=0.3, color=color_list, edgecolor='black')
     plt.bar(bar_positions_test, probs_test, width=0.3, color=color_list, edgecolor='black')
 

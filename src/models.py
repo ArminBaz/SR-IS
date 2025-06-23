@@ -59,7 +59,7 @@ class SR_IS:
         self.decay = decay
 
         if decay:
-            self.inital_lr = alpha
+            self.initial_lr = alpha
             self.decay_rate = decay_params[0]
             self.decay_steps = decay_params[1]
 
@@ -190,7 +190,7 @@ class SR_IS:
         """
         # If we are using lr decay
         if self.decay:
-            self.alpha = exponential_decay(self.inital_lr, self.decay_rate, step, self.decay_steps)
+            self.alpha = exponential_decay(self.initial_lr, self.decay_rate, step, self.decay_steps)
 
         # Update default representation
         target = self.one_hot[state_idx] + self.gamma * self.DR[next_state_idx]
@@ -198,7 +198,6 @@ class SR_IS:
 
         # Update Z-Values
         self.Z = self.DR[:,~self.terminals] @ self.P @ self.expr_t
-        # self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
 
     def learn(self, seed=None):
         """
