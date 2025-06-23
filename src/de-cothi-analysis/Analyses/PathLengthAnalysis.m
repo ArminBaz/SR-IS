@@ -1,11 +1,10 @@
 %% Save dir
-save_dir = '/Users/abizzle/Research/LinearRL-TD/figures/';
+save_dir = '../Figures/';
 
 %% Load paths
 % Humans
 load('Humans/humans.mat')
 load('Humans/SR_imp_alpha0.6_gamma0.5.mat')
-% load('Humans/SR_imp.mat')
 load('Humans/SR.mat')
 
 human_SR = SR;
@@ -14,7 +13,6 @@ human_SR_imp = SR_imp;
 % Rats
 load('Rats/rat.mat')
 load('Rats/SR_imp_alpha0.6_gamma0.5.mat')
-% load('Rats/SR_imp.mat')
 load('Rats/SR.mat')
 
 rat_SR = SR;
@@ -51,7 +49,7 @@ rat_sr_imp_lengths = cellfun(@length, rat_SR_imp);
 median_rat_sr_imp = squeeze(median(rat_sr_imp_lengths, 1));
 
 %% Plot median trajectories across starting locations for humans
-maze_index = 15;
+maze_index = 22;
 cmap = brewermap(6,'Set1');
 
 % Extract data for the specified maze
@@ -70,26 +68,27 @@ for i = 1:3
     plot(start_locations, median_data{i}, 'Color', cmap(i,:), 'LineWidth', 2);
 end
 hold off;
-
-title(sprintf('Maze %d', maze_index), 'FontSize', 18, 'FontWeight','normal');
+   
+title(sprintf('Maze %d (Humans)', maze_index), 'FontSize', 18, 'FontWeight','normal');
 xlabel('Starting Location', 'FontSize', 16);
 ylabel('Path Length', 'FontSize', 16);
-legend('Human', 'Human SR', 'Human SR Imp', 'Location', 'best', 'FontSize', 12);
+legend('Human', 'SR', 'SR-IS', 'Location', 'best', 'FontSize', 12);
 grid on;
 
 % set(gca, 'LineWidth', 2, 'FontSize', 16);
 set(gcf, 'color', 'w');
 
 ax = gca;
+set(gca, 'FontName', 'Times New Roman')
 ax.YAxis.FontSize = 16;
 ax.XAxis.FontSize = 16;
 ax.Title.FontSize = 18;
 set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 8 3]);
-% exportgraphics(gcf, [save_dir,'human_maze15.png'], 'Resolution', 300);
+exportgraphics(gcf, [save_dir,'human_maze22.pdf'], 'Resolution', 300);
 
 %% Plot median trajectories across starting locations for rats
-maze_index = 15;
+maze_index = 22;
 cmap = brewermap(6,'Set1');
 
 % Extract data for the specified maze
@@ -109,18 +108,19 @@ for i = 1:3
 end
 hold off;
 
-title(sprintf('Maze %d', maze_index), 'FontSize', 18, 'FontWeight', 'normal');
+title(sprintf('Maze %d (Rats)', maze_index), 'FontSize', 18, 'FontWeight', 'normal');
 xlabel('Starting Location', 'FontSize', 16);
-legend('Rat', 'Rat SR', 'Rat SR Imp', 'Location', 'best', 'FontSize', 12);
+legend('Rat', 'SR', 'SR-IS', 'Location', 'best', 'FontSize', 12);
 grid on;
 
 % set(gca, 'LineWidth', 2, 'FontSize', 16);
 set(gcf, 'color', 'w');
 
 ax = gca;
+set(gca, 'FontName', 'Times New Roman')
 ax.YAxis.FontSize = 16;
 ax.XAxis.FontSize = 16;
 ax.Title.FontSize = 18;
 set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 8 3]);
-% exportgraphics(gcf, [save_dir,'rat_maze15.png'], 'Resolution', 300);
+exportgraphics(gcf, [save_dir,'rat_maze22.pdf'], 'Resolution', 300);
