@@ -245,6 +245,78 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     plt.show()
 
+def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None):
+    plt.rcParams['font.family'] = 'serif'
+    color_palette = sns.color_palette("colorblind")
+    color_list = []
+    for color in colors:
+        color_list.append(color_palette[color])
+    
+    # Convert lists of arrays to numpy arrays and calculate mean and std error
+    probs_train_array = np.array(probs_train)  # Shape: (n_samples, n_states)
+    probs_test_array = np.array(probs_test)    # Shape: (n_samples, n_states)
+    
+    # Calculate means across samples
+    mean_train = np.mean(probs_train_array, axis=0)
+    mean_test = np.mean(probs_test_array, axis=0)
+    
+    # Ensure means are arrays (handle single sample case)
+    mean_train = np.atleast_1d(mean_train)
+    mean_test = np.atleast_1d(mean_test)
+    
+    # Calculate standard error (std / sqrt(n))
+    std_train = np.std(probs_train_array, axis=0, ddof=1)
+    std_test = np.std(probs_test_array, axis=0, ddof=1)
+    
+    # Ensure stds are arrays and handle single sample case
+    std_train = np.atleast_1d(std_train)
+    std_test = np.atleast_1d(std_test)
+    
+    stderr_train = std_train / np.sqrt(len(probs_train))
+    stderr_test = std_test / np.sqrt(len(probs_test))
+    
+    min_visible_height = 0.02
+    mean_train_plot = mean_train.copy()
+    mean_test_plot = mean_test.copy()
+    mean_train_plot[mean_train_plot < 0.1] = min_visible_height
+    mean_test_plot[mean_test_plot < 0.1] = min_visible_height
+
+    bar_positions_training = np.arange(len(mean_train)) * 0.4
+    bar_positions_test = np.arange(len(mean_train)) * 0.4 + 1.5
+
+    plt.bar(bar_positions_training, mean_train_plot, width=0.3, color=color_list, edgecolor='black')
+    plt.bar(bar_positions_test, mean_test_plot, width=0.3, color=color_list, edgecolor='black')
+
+    # Add error bars using the original mean values (not the adjusted ones for visibility)
+    plt.errorbar(bar_positions_training, mean_train_plot, yerr=stderr_train, 
+                fmt='none', ecolor='black', capsize=0, capthick=1)
+    plt.errorbar(bar_positions_test, mean_test_plot, yerr=stderr_test, 
+                fmt='none', ecolor='black', capsize=0, capthick=1)
+
+    handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(mean_train))]
+
+    if leg_loc is not None:
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(mean_train))], title='States', loc=leg_loc, fontsize=14)
+    else:
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(mean_train))], title='States', loc='upper right', fontsize=14)
+    
+    plt.ylabel('Probabilities', fontsize=18)
+    plt.xticks([0.4, 1.9], ['Training', 'Test'], fontsize=18)
+
+    # Set custom y-axis ticks
+    max_prob = max(max(mean_train_plot), max(mean_test_plot))
+    y_ticks = np.arange(0, max_prob + 0.1, 0.1)
+    plt.yticks(y_ticks)
+
+    if title is not None:
+        plt.title(title, fontsize=20)
+
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
+    plt.show()
+
 def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_path=None):
     """
     Another bar plot for decision probabilities, this one is exclusive to the NHB Decision probs
