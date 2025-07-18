@@ -517,7 +517,7 @@ class SR_TD:
         num_steps (int) : Number of training steps
         policy (string) : Decision policy
     """
-    def __init__(self, env_name, reward=1, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random"):
+    def __init__(self, env_name, reward=1, term_reward=10, gamma=0.82, alpha=0.1, beta=1, num_steps=25000, policy="random", diag=False):
         self.env = gym.make(env_name)
         self.start_loc = self.env.unwrapped.start_loc
         self.target_locs = self.env.unwrapped.target_locs
@@ -548,9 +548,11 @@ class SR_TD:
         self.policy = policy
 
         # Model
-        self.SR = np.random.uniform(0, 0.1, (self.size, self.size))
-        np.fill_diagonal(self.SR, 1)
-        # self.SR = np.eye(self.size)
+        if diag:
+            self.SR = np.eye(self.size)
+        else:
+            self.SR = np.random.uniform(0, 0.1, (self.size, self.size))
+            np.fill_diagonal(self.SR, 1)
         self.V = np.zeros(self.size)
         self.one_hot = np.eye(self.size)
 
@@ -621,7 +623,7 @@ class SR_TD:
 
     def update(self, state_idx, next_state_idx):
         """
-        Update the DR
+        Update the SR
         """
         # Update successor representation
         self.SR[state_idx] = (1 - self.alpha) * self.SR[state_idx] + self.alpha * (self.one_hot[state_idx] + self.gamma * self.SR[next_state_idx])
@@ -648,7 +650,7 @@ class SR_TD:
             # Take action
             next_state, next_state_idx, done = self.take_action(state)
 
-            # Update  DR
+            # Update  SR
             self.update(state_idx, next_state_idx)
 
             if done:
