@@ -136,30 +136,22 @@ def new_goal(agent, T, loc):
     d = L[idx, :] - L0[idx, :]
     m0 = D0[:,idx]
 
-    # Convert d to a row vector of size (1, m)
     d = d.reshape(1, -1)
 
-    # Convert m0 to a column vector of size (m, 1)
     m0 = m0.reshape(-1, 1)
 
-    # Get the amount of change to the DR
     alpha = (np.dot(m0,d)) / (1 + (np.dot(d,m0)))
     change = np.dot(alpha,D0)
 
-    # Apply change to DR
     D = np.copy(D0)
     D -= change
 
-    # Set agent's DR to new DR
     agent.DR = D
 
-    # Update terminals
     agent.terminals = np.diag(T) == 1
-    # Update P
     agent.P = T[~agent.terminals][:,agent.terminals]
-    # Update reward
-    agent.r = np.full(len(T), -1)     # our reward at each non-terminal state to be -1
-    agent.r[agent.terminals] = 20         # reward at terminal state is 20
+    agent.r = np.full(len(T), -1)
+    agent.r[agent.terminals] = 20
     agent.expr = np.exp(agent.r[agent.terminals] / agent._lambda)
 
 def create_mapping(maze):
