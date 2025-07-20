@@ -1,12 +1,12 @@
 %% Save dir
-save_dir = '/Users/abizzle/Research/LinearRL-TD/figures/';
+save_dir = '/Users/abizzle/Research/SR-IS/figures/';
 
 %% Human Paths
 load('Humans/humans.mat')
 load('Humans/Q.mat')
 load('Humans/MB.mat')
 load('Humans/SR.mat')
-load('Humans/SR_imp_alpha0.6_gamma0.5.mat')
+load('Humans/SR_IS.mat')
 
 %% Human Config Correlations
 n_ppt = 18;
@@ -54,7 +54,7 @@ load('Rats/rat.mat')
 load('Rats/Q.mat')
 load('Rats/MB.mat')
 load('Rats/SR.mat')
-load('Rats/SR_imp_alpha0.6_gamma0.5.mat')
+load('Rats/SR_IS.mat')
 
 rat_SR = SR;
 rat_SR_imp = SR_imp;
@@ -91,6 +91,7 @@ set(gca,'FontSize',18)
 set(gca, 'FontName', 'Times New Roman')
 
 title('Rats', 'FontSize', 20, 'FontWeight','normal', 'FontName', 'Times New Roman');
+ylabel('Correlation coefficient', 'FontSize', 18);
 xticks([1,2,3, 4])
 xticklabels({'MF','MB','SR', 'SR-IS'})
 

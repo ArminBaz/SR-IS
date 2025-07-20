@@ -1,7 +1,7 @@
 load('rat.mat')
 load('MB.mat')
 load('Q.mat')
-load('SR_imp_alpha0.6_gamma0.5.mat')
+load('SR_IS.mat')
 load('SR.mat')
 
 cmap = brewermap(6,'Set1');

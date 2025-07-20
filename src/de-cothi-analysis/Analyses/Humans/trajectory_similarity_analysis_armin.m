@@ -3,7 +3,7 @@ load('humans.mat')
 load('MB.mat')
 load('Q.mat')
 load('SR.mat')
-load('SR_imp_alpha0.6_gamma0.5.mat')
+load('SR_IS.mat')
 load('mazes.mat')
 
 %% Get ppt ids for indivual analyses
