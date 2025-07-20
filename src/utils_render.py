@@ -27,29 +27,23 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
     if state is None:
         state = agent.start_loc
 
-    # Define color palette
     color_palette = sns.color_palette("colorblind")
     
-    # Display maze
     ax.imshow(m, origin='upper', cmap='gray_r')
 
-    # Minor ticks
     ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
     ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
 
     ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
-    # Display agent
+
     agent_loc = patches.Circle((state[1],state[0]), radius=0.4, fill=True, color='blue', alpha=0.7)
     ax.add_patch(agent_loc)
 
-    # Display Reward
     for i, target_loc in enumerate(agent.target_locs):
-        # reward = patches.Circle((target_loc[1], target_loc[0]), radius=0.4, fill=True, color='green')
         reward = patches.Rectangle((target_loc[1] - 0.5, target_loc[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
         ax.text(target_loc[1], target_loc[0], f'$\mathrm{{r}}_{i+1}$', color='white', fontsize=fontsize, ha='center', va='center', style='normal')
         ax.add_patch(reward)
 
-    # Color specific maze locations using Rectangle patches
     if locs is not None:
         for loc, color in zip(locs, colors):
             rect = patches.Rectangle((loc[1] - 0.5, loc[0] - 0.5), 1.0, 1.0, fill=True, color=color_palette[color])
@@ -64,14 +58,11 @@ def render_maze(agent, state=None, locs=None, colors=None, ax=None, save_path=No
         elif direction == 'v':  # Vertical wall
             ax.plot([col - 0.5, col - 0.5], [row - 0.5, row + 0.5], color='red', linewidth=4, zorder=10)
 
-    # Hide tick labels
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
-    # Hide tick marks
     ax.tick_params(which='both', size=0)
 
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
@@ -97,37 +88,30 @@ def render_maze_replan(agent, state=None, initial_goal=None, replan_goals=None, 
     if initial_goal is None:
         initial_goal = agent.target_locs[0]
 
-    # Display maze
     ax.imshow(m, origin='upper', cmap='gray_r')
 
-    # Minor ticks
     ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
     ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
 
     ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
-    # Display agent
+
     agent_loc = patches.Circle((state[1],state[0]), radius=0.4, fill=True, color='blue', alpha=0.7)
     ax.add_patch(agent_loc)
 
-    # Display initial goal
     reward = patches.Rectangle((initial_goal[1] - 0.5, initial_goal[0] - 0.5), 1.0, 1.0, fill=True, color='green', alpha=0.7)
     ax.text(initial_goal[1], initial_goal[0], f'$\mathrm{{r}}_{1}$', color='white', fontsize=fontsize, ha='center', va='center')
     ax.add_patch(reward)
 
-    # Display new rewards
     for i, goal_loc in enumerate(replan_goals, 2):
         reward = patches.Rectangle((goal_loc[1] - 0.5, goal_loc[0] - 0.5), 1.0, 1.0, fill=True, color='purple', alpha=0.5)
         ax.text(goal_loc[1], goal_loc[0], f'$\mathrm{{r}}_{i}$', color='white', fontsize=fontsize, ha='center', va='center')
         ax.add_patch(reward)
 
-    # Hide tick labels
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
-    # Hide tick marks
     ax.tick_params(which='both', size=0)
 
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
@@ -142,29 +126,23 @@ def render_maze_dc(maze, save_path=None, title=None):
     """
     fig, ax = plt.subplots()
     
-    # Preprocess the maze for grayscale representation
     maze_gray = np.zeros_like(maze, dtype=float)
-    maze_gray[maze == -1] = 1  # Barriers become black
-    maze_gray[maze == 0] = 0   # Open paths become white
-    maze_gray[maze > 0] = 0    # Treat reward locations as open paths for now
+    maze_gray[maze == -1] = 1 
+    maze_gray[maze == 0] = 0 
+    maze_gray[maze > 0] = 0
     
-    # Plot the base maze
     ax.imshow(maze_gray, origin='upper', cmap='gray_r')
 
-    # Minor ticks
     ax.set_xticks(np.arange(-.5, len(maze), 1), minor=True)
     ax.set_yticks(np.arange(-.5, len(maze), 1), minor=True)
 
     ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
     
-    # Hide tick labels
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
-    # Hide tick marks
     ax.tick_params(which='both', size=0)
 
-    # Add colored squares for starting locations and green square
     for i in range(maze.shape[0]):
         for j in range(maze.shape[1]):
             if 1 <= maze[i, j] <= 10:
@@ -172,15 +150,12 @@ def render_maze_dc(maze, save_path=None, title=None):
                 ax.add_patch(rect)
                 ax.text(j, i, str(int(maze[i, j])), ha='center', va='center', color='white', fontweight='bold', fontsize=10)
     
-    # Add green square at (3,3)
     rect = patches.Rectangle((3-0.5, 3-0.5), 1, 1, fill=True, facecolor='green', alpha=0.7)
     ax.add_patch(rect)
 
-    # Title
     if title is not None:
         plt.title(title, fontsize=18)
 
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
@@ -252,23 +227,18 @@ def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, sav
     for color in colors:
         color_list.append(color_palette[color])
     
-    # Convert lists of arrays to numpy arrays and calculate mean and std error
-    probs_train_array = np.array(probs_train)  # Shape: (n_samples, n_states)
-    probs_test_array = np.array(probs_test)    # Shape: (n_samples, n_states)
+    probs_train_array = np.array(probs_train)
+    probs_test_array = np.array(probs_test)
     
-    # Calculate means across samples
     mean_train = np.mean(probs_train_array, axis=0)
     mean_test = np.mean(probs_test_array, axis=0)
     
-    # Ensure means are arrays (handle single sample case)
     mean_train = np.atleast_1d(mean_train)
     mean_test = np.atleast_1d(mean_test)
     
-    # Calculate standard error (std / sqrt(n))
     std_train = np.std(probs_train_array, axis=0, ddof=1)
     std_test = np.std(probs_test_array, axis=0, ddof=1)
     
-    # Ensure stds are arrays and handle single sample case
     std_train = np.atleast_1d(std_train)
     std_test = np.atleast_1d(std_test)
     
@@ -287,7 +257,6 @@ def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, sav
     plt.bar(bar_positions_training, mean_train_plot, width=0.3, color=color_list, edgecolor='black')
     plt.bar(bar_positions_test, mean_test_plot, width=0.3, color=color_list, edgecolor='black')
 
-    # Add error bars using the original mean values (not the adjusted ones for visibility)
     plt.errorbar(bar_positions_training, mean_train_plot, yerr=stderr_train, 
                 fmt='none', ecolor='black', capsize=0, capthick=1)
     plt.errorbar(bar_positions_test, mean_test_plot, yerr=stderr_test, 
@@ -303,7 +272,6 @@ def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, sav
     plt.ylabel('Probabilities', fontsize=18)
     plt.xticks([0.4, 1.9], ['Training', 'Test'], fontsize=18)
 
-    # Set custom y-axis ticks
     max_prob = max(max(mean_train_plot), max(mean_test_plot))
     y_ticks = np.arange(0, max_prob + 0.1, 0.1)
     plt.yticks(y_ticks)
@@ -311,7 +279,6 @@ def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, sav
     if title is not None:
         plt.title(title, fontsize=20)
 
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
@@ -335,50 +302,38 @@ def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_p
     for color in colors:
         color_list.append(color_palette[color])
 
-    # Set the style and font
     plt.rcParams['font.family'] = 'serif'
     
-    # Create the plot
     fig, ax = plt.subplots(figsize=(7, 8))
     x = np.arange(len(means)) * 0.25
     
-    # Plot the bars with black edge color
     bars = ax.bar(x, means, color=color_list, edgecolor='black', linewidth=1, width=0.15)
     
-    # Add error bars if std is provided
     if std is not None:
         ax.errorbar(x, means, yerr=std, fmt='none', color='black', capsize=0)
     
-    # Customize the plot
     ax.set_ylabel(ylabel, fontsize=18)
     ax.set_title(title, fontsize=20) if title else None
     ax.set_xticks(x)
     ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=18)
     
-    # Set y-axis limits and ticks
     ax.set_ylim(0, 1.1)
     ax.set_yticks(np.arange(0, 1.01, 0.2))
     
-    # Add black border to all spines
     for spine in ['left', 'right', 'bottom', 'top']:
         ax.spines[spine].set_color('black')
         ax.spines[spine].set_linewidth(1)
     
-    # Remove grid
     ax.grid(False)
     
-    # Set background color to white
     ax.set_facecolor('white')
     fig.patch.set_facecolor('white')
     
-    # Adjust layout
     plt.tight_layout()
     
-    # Save the plot if a save path is provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
     
-    # Show the plot
     plt.show()
 
 def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg_loc=None, save_path=None, title=None, std=None):
@@ -399,54 +354,45 @@ def plot_nhb_decisions(probs_reward, probs_policy, probs_transition, colors, leg
     color_list = [color_palette[color] for color in colors]
 
     num_states = len(probs_reward)
-    bar_width = 0.3  # Reduced bar width
-    state_spacing = 0.05  # Added spacing between bars for each state
-    group_spacing = 0.8  # Increased group spacing
+    bar_width = 0.3  
+    state_spacing = 0.05
+    group_spacing = 0.8
     
-    # Calculate positions for each group of bars
     indices = np.arange(3) * (num_states * (bar_width + state_spacing) + group_spacing)
     
     plt.figure(figsize=(14, 5))
 
-    # Plot bars for each revaluation type
     for i in range(num_states):
         plt.bar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], bar_width, color=color_list[i], edgecolor='black')
         plt.bar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], bar_width, color=color_list[i], edgecolor='black')
         plt.bar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], bar_width, color=color_list[i], edgecolor='black')
 
-    # Add error bars if std is provided
     if std is not None:
         for i in range(num_states):
             plt.errorbar(indices[0] + i * (bar_width + state_spacing), probs_reward[i], yerr=std[0][i], fmt='none', ecolor='black', capsize=0)
             plt.errorbar(indices[1] + i * (bar_width + state_spacing), probs_policy[i], yerr=std[1][i], fmt='none', ecolor='black', capsize=0)
             plt.errorbar(indices[2] + i * (bar_width + state_spacing), probs_transition[i], yerr=std[2][i], fmt='none', ecolor='black', capsize=0)
 
-    # Create legend for states
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(num_states)]
     if leg_loc is not None:
         plt.legend(handles, [f'State {i+2}' for i in range(num_states)], title='States', loc=leg_loc, fontsize=12, title_fontsize=14)
     else:
         plt.legend(handles, [f'State {i+2}' for i in range(num_states)], title='States', loc='upper right', fontsize=12, title_fontsize=14)
 
-    # plt.xlabel('Revaluation Type', fontsize=18, labelpad=20)  # Increased labelpad for more space
     plt.ylabel('Probabilities', fontsize=18)
     plt.title(title if title else 'Decision Probabilities Across Revaluations', fontsize=22, pad=20)
     
-    # Set x-ticks to be in the middle of the grouped bars
     plt.xticks(indices + (num_states - 1) * (bar_width + state_spacing) / 2, ['Reward Revaluation', 'Policy Revaluation', 'Transition Revaluation'], fontsize=18)
 
-    # Set custom y-axis ticks
     max_prob = max(max(probs_reward), max(probs_policy), max(probs_transition))
     y_ticks = np.arange(0, min(max_prob + 0.1, 1.05), 0.1)
     plt.yticks(y_ticks, fontsize=12)
 
     plt.rcParams['font.family'] = 'serif'
 
-    # Adjust layout to prevent cutting off labels and add more space at the bottom
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.15)  # Increase bottom margin
 
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
@@ -625,23 +571,18 @@ def render_maze_with_DR(agent, state=None, ax=None, save_path=None, fontsize=10)
     if state is None:
         state = agent.start_loc
     
-    # Display maze base layer
     ax.imshow(m, origin='upper', cmap='gray_r')
     
-    # Minor ticks
     ax.set_xticks(np.arange(-.5, len(m), 1), minor=True)
     ax.set_yticks(np.arange(-.5, len(m), 1), minor=True)
     
     ax.grid(which="minor", color='black', linewidth=2, alpha=0.5)
     
-    # Get current state index
     state_idx = agent.mapping[(state[0], state[1])]
     
-    # Get all DR values for current state
     dr_values = []
     valid_positions = []
     
-    # Collect valid DR values for normalization
     for i in range(len(m)):
         for j in range(len(m[0])):
             if m[i][j] == 0 and (i, j) in agent.mapping:
@@ -649,60 +590,49 @@ def render_maze_with_DR(agent, state=None, ax=None, save_path=None, fontsize=10)
                 dr_value = agent.DR[state_idx][target_idx]
                 dr_values.append(dr_value)
                 valid_positions.append((i, j))
-    
-    # Get min/max for normalization
+
     dr_min = min(dr_values) if dr_values else 0
     dr_max = max(dr_values) if dr_values else 1
     
-    # Create deep purple colormap
-    deep_purple = mcolors.to_rgba('#6A0DAD')  # Deep purple for high values
-    mid_purple = mcolors.to_rgba('#9370DB')   # Medium purple for mid values
-    light_purple = mcolors.to_rgba('#D8BFD8')  # Light purple for low values
+    deep_purple = mcolors.to_rgba('#6A0DAD')
+    mid_purple = mcolors.to_rgba('#9370DB')
+    light_purple = mcolors.to_rgba('#D8BFD8')
     white = mcolors.to_rgba('white')
     
-    # Create custom colormap with non-linear gradient
     cmap = mcolors.LinearSegmentedColormap.from_list(
         'enhanced_purple', 
         [white, mid_purple, deep_purple], 
         N=256
     )
     
-    # Apply power transformation to emphasize lower values
-    power = 0.8  # Value < 1 makes lower values appear stronger
+    power = 0.8 
     
-    # Overlay DR values with stronger colors for all values
     for i, j in valid_positions:
         target_idx = agent.mapping[(i, j)]
         dr_value = agent.DR[state_idx][target_idx]
         
-        # Normalize DR value
         if dr_max > dr_min:
             normalized_dr = (dr_value - dr_min) / (dr_max - dr_min)
         else:
             normalized_dr = 0.5
         
-        # Apply power transformation to emphasize lower values
         transformed_dr = normalized_dr ** power
         
-        # Get color from our custom colormap
         color = cmap(transformed_dr)
         
-        # Create rectangle overlay with solid color (no transparency)
         rect = patches.Rectangle(
             (j - 0.5, i - 0.5), 
             1.0, 
             1.0, 
             fill=True, 
             color=color,
-            alpha=0.8  # Fixed fairly high alpha for better visibility
+            alpha=0.8
         )
         ax.add_patch(rect)
     
-    # Display agent
     agent_loc = patches.Circle((state[1], state[0]), radius=0.4, fill=True, color='blue', alpha=0.9)
     ax.add_patch(agent_loc)
     
-    # Display Reward
     for i, target_loc in enumerate(agent.target_locs):
         reward = patches.Rectangle(
             (target_loc[1] - 0.5, target_loc[0] - 0.5), 
@@ -723,28 +653,13 @@ def render_maze_with_DR(agent, state=None, ax=None, save_path=None, fontsize=10)
         )
         ax.add_patch(reward)
     
-    # Hide tick labels
     ax.set_xticklabels([])
     ax.set_yticklabels([])
     
-    # Hide tick marks
     ax.tick_params(which='both', size=0)
     
-    # Save the image
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
     
     return ax
-
-def pretty_print_values(agent):
-    """
-    Prints the values of the maze all pretty and stuff
-    
-    Args:
-        agent (SR_IS class) : The agent
-        state (tuple/array, Optional) : The state to draw the agent in, if None will use starting location
-        ax (matplotlib.axes, Optional) : The axes to draw on
-        save_path (string, Optional) : Where to save the image
-        fontsize (int, Optional) : Font size for text elements
-    """
     
