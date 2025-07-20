@@ -284,9 +284,9 @@ def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, sav
 
     plt.show()
 
-def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_path=None):
+def create_bar_plot(means, colors, ylabel, xlabels, y_lim=None, std=None, title=None, save_path=None):
     """
-    Another bar plot for decision probabilities, this one is exclusive to the NHB Decision probs
+    Bar plot for NHB Plotting
 
     Args:
         means (array) : mean of each bar to plot
@@ -297,6 +297,7 @@ def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_p
         title (string, optional) : title of the plot
         save_path (string, optional) : where to save the figure
     """
+
     color_palette = sns.color_palette("colorblind")
     color_list = []
     for color in colors:
@@ -304,21 +305,29 @@ def create_bar_plot(means, colors, ylabel, xlabels, std=None, title=None, save_p
 
     plt.rcParams['font.family'] = 'serif'
     
-    fig, ax = plt.subplots(figsize=(7, 8))
+    fig, ax = plt.subplots(figsize=(6, 5))
     x = np.arange(len(means)) * 0.25
     
-    bars = ax.bar(x, means, color=color_list, edgecolor='black', linewidth=1, width=0.15)
+    plot_means = np.array(means).copy()
+    min_visible_height = 0.02
+    plot_means[plot_means < 0.1] = min_visible_height
+    
+    bars = ax.bar(x, plot_means, color=color_list, edgecolor='black', linewidth=1, width=0.14)
     
     if std is not None:
         ax.errorbar(x, means, yerr=std, fmt='none', color='black', capsize=0)
     
-    ax.set_ylabel(ylabel, fontsize=18)
-    ax.set_title(title, fontsize=20) if title else None
+    ax.set_ylabel(ylabel, fontsize=14)
+    ax.set_title(title, fontsize=18) if title else None
     ax.set_xticks(x)
-    ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=18)
+    ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=14)
     
-    ax.set_ylim(0, 1.1)
-    ax.set_yticks(np.arange(0, 1.01, 0.2))
+    if y_lim is None:
+        ax.set_yticks(np.arange(0, 1.01, 0.2))
+        ax.set_ylim(0, 1.1)
+    else:
+        ax.set_yticks(np.arange(y_lim[0], y_lim[1], 0.2))
+        ax.set_ylim(y_lim[0], y_lim[1])
     
     for spine in ['left', 'right', 'bottom', 'top']:
         ax.spines[spine].set_color('black')
