@@ -35,3 +35,4 @@ Each notebook contains the simulations to generate the figures in the paper all 
 * Figure S2 - `policy_reval.ipynb`
 * Figure S3 - `reval_maze.ipynb`
 * Figure S4 - `de-cothi-analysis/`
+* Figure S4 - `de-cothi-analysis/`
