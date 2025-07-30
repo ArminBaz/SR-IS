@@ -337,15 +337,15 @@ def decision_policy_SR(agent):
         state_idx = agent.mapping[state]
         successor_states = agent.env.unwrapped.get_successor_states(state)
 
-        v_sum = sum(
-                    ( agent.V[agent.mapping[(s[0][0],s[0][1])]] / agent.beta ) for s in successor_states
-                    )
+        # Fixed softmax calculation in one line
+        exp_values = np.exp([agent.V[agent.mapping[(s[0][0],s[0][1])]] / agent.beta for s in successor_states])
+        v_sum = np.sum(exp_values)
 
-        for action in agent.env.unwrapped.get_available_actions(state):
+        for i, action in enumerate(agent.env.unwrapped.get_available_actions(state)):
             direction = agent.env.unwrapped._action_to_direction[action]
             new_state = state + direction
             new_state_idx = agent.mapping[(new_state[0], new_state[1])]
-            prob = ( agent.V[new_state_idx] / agent.beta ) / v_sum
+            prob = exp_values[i] / v_sum  # Use the corresponding exp value
             T_pi[state_idx, new_state_idx] += prob
 
     T_pi[agent.terminals, agent.terminals] = 1

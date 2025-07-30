@@ -598,18 +598,18 @@ class SR_TD:
             successor_states = self.env.unwrapped.get_successor_states(state)
             action_probs = np.full(self.env.action_space.n, 0.0)
 
-            v_sum = sum(
-                        ( self.V[self.mapping[(s[0][0],s[0][1])]] / self.beta ) for s in successor_states
-                        )
+            # Simple softmax without overflow protection
+            exp_values = np.exp([self.V[self.mapping[(s[0][0],s[0][1])]] / self.beta for s in successor_states])
+            v_sum = np.sum(exp_values)
 
             # if we don't have enough info, random action
             if v_sum == 0:
                 return self.env.unwrapped.random_action(), None
 
+            exp_idx = 0
             for action in self.env.unwrapped.get_available_actions(state):
-                direction = self.env.unwrapped._action_to_direction[action]
-                new_state = state + direction
-                action_probs[action] = ( self.V[self.mapping[(new_state[0], new_state[1])]] / self.beta ) / v_sum
+                action_probs[action] = exp_values[exp_idx] / v_sum
+                exp_idx += 1
             
             action = np.random.choice(self.env.action_space.n, p=action_probs)
 
