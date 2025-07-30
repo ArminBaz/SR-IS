@@ -135,6 +135,37 @@ class SR_IS:
                 # print(self.Z[self.mapping[(new_state[0], new_state[1])]])
                 action_probs[action] = np.exp( (np.log( self.Z[self.mapping[(new_state[0], new_state[1])]] + 1e-20 )) / self.beta ) / v_sum
 
+            if np.any(np.isnan(action_probs)):
+                print("NaNs detected, recalculating with safer log operations")
+                
+                # Recalculate with the same logic but safer operations
+                v_sum = sum(
+                    np.exp((np.log(np.maximum(self.Z[self.mapping[(s[0][0],s[0][1])]], 1e-10))) / self.beta) 
+                    for s in successor_states
+                )
+                
+                if v_sum == 0:
+                    return self.env.unwrapped.random_action(), 1
+                
+                for action in self.env.unwrapped.get_available_actions(state):
+                    direction = self.env.unwrapped._action_to_direction[action]
+                    new_state = state + direction
+                    z_val = np.maximum(self.Z[self.mapping[(new_state[0], new_state[1])]], 1e-10)
+                    action_probs[action] = np.exp(np.log(z_val) / self.beta) / v_sum
+                
+                # Final safety check
+                if np.any(np.isnan(action_probs)) or np.sum(action_probs) == 0:
+                    action_probs = np.ones_like(action_probs) / len(action_probs)
+
+            # NaN handler
+            # if np.any(np.isnan(action_probs)):
+            #     action_probs = np.nan_to_num(action_probs)  # NaNs become 0s
+            #     total_sum = np.sum(action_probs)
+            #     if total_sum == 0:  # All were NaN, so now all are 0
+            #         action_probs = np.ones_like(action_probs) / len(action_probs)  # Uniform distribution
+            #     else:
+            #         action_probs = action_probs / total_sum
+
             action = np.random.choice(self.env.action_space.n, p=action_probs)
             s_prob = action_probs[action]
 
@@ -146,15 +177,12 @@ class SR_IS:
                 direction = self.env.unwrapped._action_to_direction[action]
                 new_state = state + direction
 
-                # Need this to make it work for now
-                # np.any(np.all(self.target_locs == new_state, axis=1))
                 if np.any(np.all(self.target_locs == new_state, axis=1)):
                     return action
 
                 if self.maze[new_state[0], new_state[1]] == "1":
                     continue
                 action_values[action] = self.V[self.mapping[(new_state[0], new_state[1])]]
-                # action_values[action] = round(np.log(self.Z[self.mapping[(new_state[0],new_state[1])]]), 2)
 
             return np.nanargmax(action_values)
 
@@ -228,7 +256,6 @@ class SR_IS:
             state = next_state
 
         # Update DR at terminal state
-        # self.Z[self.terminals] = np.exp(self.r[self.terminals] / self._lambda)
         self.update_V()
 
 
@@ -252,7 +279,7 @@ class SR_IS_NHB:
         self.P = self.T[~self.terminals][:,self.terminals]
 
         # Set reward
-        self.reward_nt = -1
+        self.reward_nt = -0.1
         self.r = np.full(len(self.T), self.reward_nt)
         # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
         if self.exp_type == "policy_reval":
@@ -345,7 +372,7 @@ class SR_IS_NHB:
         self.Z[self.terminals] = self.expr_t
 
     def update_V(self):
-        self.V = np.round(np.log(self.Z), 2)
+        self.V = np.log(self.Z) * self._lambda
     
     def get_successor_states(self, state):
         """
@@ -377,7 +404,7 @@ class SR_IS_NHB:
             successor_states = self.get_successor_states(state)
             action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
 
-            v_sum = sum(np.exp((np.log(self.Z[s] + 1e-20)) / self.beta) for s in successor_states)
+            v_sum = sum(np.exp((np.log(self.Z[s] + 1e-20) * self._lambda) / self.beta) for s in successor_states)
 
             # if we don't have enough info, random action
             if v_sum == 0:
@@ -390,7 +417,7 @@ class SR_IS_NHB:
                 if done:
                     action = np.random.choice([0,1])
                     return action, 1
-                action_probs[action] = np.exp((np.log(self.Z[new_state] + 1e-20)) / self.beta ) / v_sum
+                action_probs[action] = np.exp((np.log(self.Z[new_state] + 1e-20) * self._lambda) / self.beta ) / v_sum
                 
             action = np.random.choice([0,1], p=action_probs)
             s_prob = action_probs[action]
@@ -828,7 +855,6 @@ class SR_NHB:
                 # Take action
                 next_state, done = self.envstep[state, action]
 
-                # Update SR
                 self.SR[state] = (1-self.alpha)* self.SR[state] + self.alpha * ( self.one_hot[state] + self.gamma * self.SR[next_state]  )
 
                 # Update Values
