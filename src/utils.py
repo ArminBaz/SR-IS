@@ -41,8 +41,8 @@ def woodbury(agent, T, inv=False):
     different_rows, _ = np.where(differences)
     delta_locs = np.unique(different_rows)
 
-    L0 = np.diag(np.exp(-agent.r)) - agent.T 
-    L = np.diag(np.exp(-agent.r)) - T
+    L0 = np.diag(np.exp(-agent.r)/agent._lambda) - agent.T 
+    L = np.diag(np.exp(-agent.r)/agent._lambda) - T
 
     if inv:
         D0 = np.linalg.inv(L0)
@@ -97,6 +97,33 @@ def woodbury_SR(agent, T, T_pi, inv=False):
 
     return D
 
+# def woodbury_V(agent, D, term_reward):
+#     """Gets the new values with in-exact woodbury update"""
+#     print(f"Input DR to woodbury_V: min={np.min(D):.6f}, max={np.max(D):.6f}")
+
+#     # Update SR-IS with Woodbury
+#     Z, V = np.zeros(agent.size), np.zeros(agent.size)
+#     Z[~agent.terminals] = D[~agent.terminals][:,~agent.terminals] @ agent.P @ np.array([np.exp(term_reward)])
+#     Z[agent.terminals] = np.exp(term_reward)
+    
+#     Z += (np.abs(np.min(Z)) + 0.1)
+#     V = np.round(np.log(Z), 5)
+
+#     print(f"Output Z from woodbury_V: min={np.min(Z):.6f}, max={np.max(Z):.6f}")
+
+#     return Z, V
+
+def woodbury_V(agent, D, term_reward):
+    Z, V = np.zeros(agent.size), np.zeros(agent.size)
+    Z[~agent.terminals] = D[~agent.terminals][:,~agent.terminals] @ agent.P @ np.array([np.exp(term_reward)])
+    Z[agent.terminals] = np.exp(term_reward)
+    
+    min_z = np.min(Z)
+    Z += (np.abs(min_z) + 0.1)
+    
+    V = np.round(np.log(Z), 5)
+    return Z, V
+
 def policy_reval(agent):
     """
     Performs replanning when the reward structure of the environment has changed
@@ -113,7 +140,7 @@ def policy_reval(agent):
 
     Z_new[~agent.terminals] = agent.DR[~agent.terminals][:,~agent.terminals] @ agent.P @ expr_new
     Z_new[agent.terminals] = expr_new
-    V_new = np.round(np.log(Z_new), 6)
+    V_new = np.log(Z_new) * agent._lambda
 
     return V_new, Z_new
 
@@ -439,8 +466,6 @@ def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
 
     # set the start and agent location
     agent.env.unwrapped.start_loc, agent.env.unwrapped.agent_loc = state, state
-    
-    steps = 0
 
     # If we are checking for a specific terminal state
     if term_state is not None:
@@ -453,14 +478,10 @@ def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
             obs, _, done, _, _ = agent.env.step(action)
             next_state = obs["agent"]
             traj.append(next_state)
-
-            steps += 1
             state = next_state
 
             if np.all(next_state == term_state):
                 break
-    
-    # Else
     else:
         while True:
             if policy == "softmax":
@@ -471,8 +492,6 @@ def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
             obs, _, done, _, _ = agent.env.step(action)
             next_state = obs["agent"]
             traj.append(next_state)
-
-            steps += 1
             state = next_state
 
             if done:
