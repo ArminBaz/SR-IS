@@ -26,10 +26,12 @@ I have different notebooks, each containing different simulations that I used to
 
 ## Notebooks
 Each notebook contains the simulations to generate the figures in the paper all the notebooks can be found in `src/`.
-* Figure 2 - 2b. `convergence.ipynb`, 2c. `four_room_replan.ipynb`, 2e/f. `complex_maze.ipynb`
+* Figure 2 - 2b. `convergence.ipynb`, 2c. `four_room_replan.ipynb`, 2e. `model_comparison_BL.ipynb`, 2f. `model_comparison_TR.ipynb`
 * Figure 3 - `reval_nhb.ipynb`
-* Figure 4 - 4c/d. `latent.ipynb`, 4g/h. `detour.ipynb`
-* Figure 5 - `de-cothi-analysis/`
+* Figure 4 - `kahn-analysis/`
+* Figure 5 - 4c/d. `latent.ipynb`, 4g/h. `detour.ipynb`
+* Figure 6 - `de-cothi-analysis/`
 * Figure S1 - `reval_nhb_full.ipynb`
-* Figure S2 - `reval_maze.ipynb`
-* Figure S3 - `de-cothi-analysis/`
+* Figure S2 - `policy_reval.ipynb`
+* Figure S3 - `reval_maze.ipynb`
+* Figure S4 - `de-cothi-analysis/`
