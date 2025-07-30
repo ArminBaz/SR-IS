@@ -11,7 +11,7 @@ def update_terminal_reward(agent, loc, r):
     Update the reward for the terminal state of the agent according to loc
 
     Args:
-        agent (LinearRL class) : The LinearRL agent
+        agent (LinearRL class) : The SR-IS agent
         loc (int) : The terminal location to change the reward of [0->n] n= number of terminal locations - 1
         r (float) : The new reward to change r[loc] to
     """
@@ -20,6 +20,19 @@ def update_terminal_reward(agent, loc, r):
     agent.r[r_loc] = r
     # Update expr_t inside of the agent
     agent.expr_t = np.exp(agent.r[agent.terminals] / agent._lambda)
+
+def update_terminal_reward_SR(agent, loc, r):
+    """
+    Update the reward for the terminal state of the agent according to loc
+
+    Args:
+        agent (SR-IS class) : The SR agent
+        loc (int) : The terminal location to change the reward of [0->n] n= number of terminal locations - 1
+        r (float) : The new reward to change r[loc] to
+    """
+    # Get location of reward and change
+    r_loc = np.argwhere(agent.terminals)[loc]
+    agent.r[r_loc] = r
 
 def exponential_decay(initial_learning_rate, decay_rate, global_step, decay_steps):
     """
@@ -33,7 +46,7 @@ def woodbury(agent, T, inv=False):
     Applies the woodbury update to the DR of the agent, accomodating for new transition structure (T)
     
     Args:
-        agent (LinearRL class) : The LinearRL agent 
+        agent (SR-IS class) : The SR-IS agent 
         T (array) : The transition matrix of the new environment
         inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
     """
@@ -67,7 +80,7 @@ def woodbury_SR(agent, T, T_pi, inv=False):
     Applies the woodbury update to the SR of the agent, accomodating for new transition structure (T)
     
     Args:
-        agent (LinearRL class) : The LinearRL agent 
+        agent (SR-IS class) : The SR-IS agent 
         T (array) : The transition matrix of the new environment
         T_pi (array) : The biased SR transition matrix
         inv (bool) : Whether or not to use the inverse matrix for an absolute solution (used for debugging/sanity check)
@@ -97,22 +110,6 @@ def woodbury_SR(agent, T, T_pi, inv=False):
 
     return D
 
-# def woodbury_V(agent, D, term_reward):
-#     """Gets the new values with in-exact woodbury update"""
-#     print(f"Input DR to woodbury_V: min={np.min(D):.6f}, max={np.max(D):.6f}")
-
-#     # Update SR-IS with Woodbury
-#     Z, V = np.zeros(agent.size), np.zeros(agent.size)
-#     Z[~agent.terminals] = D[~agent.terminals][:,~agent.terminals] @ agent.P @ np.array([np.exp(term_reward)])
-#     Z[agent.terminals] = np.exp(term_reward)
-    
-#     Z += (np.abs(np.min(Z)) + 0.1)
-#     V = np.round(np.log(Z), 5)
-
-#     print(f"Output Z from woodbury_V: min={np.min(Z):.6f}, max={np.max(Z):.6f}")
-
-#     return Z, V
-
 def woodbury_V(agent, D, term_reward):
     Z, V = np.zeros(agent.size), np.zeros(agent.size)
     Z[~agent.terminals] = D[~agent.terminals][:,~agent.terminals] @ agent.P @ np.array([np.exp(term_reward)])
@@ -120,8 +117,8 @@ def woodbury_V(agent, D, term_reward):
     
     min_z = np.min(Z)
     Z += (np.abs(min_z) + 0.1)
-    
     V = np.round(np.log(Z), 5)
+
     return Z, V
 
 def policy_reval(agent):
@@ -129,7 +126,7 @@ def policy_reval(agent):
     Performs replanning when the reward structure of the environment has changed
     
     Args:
-        agent (LinearRL class) : The LinearRL agent
+        agent (SR-IS class) : The SR-IS agent
 
     Returns:
         V_new (array) : New value of each state
@@ -150,7 +147,7 @@ def new_goal(agent, T, loc):
     plan towards
     
     Args:
-    agent (LinearRL class): The LinearRL agent 
+    agent (SR-IS class): The SR-IS agent 
     T (array): The transition matrix of the new environment
     loc (tuple): Location of the new goal state
     """
@@ -304,7 +301,7 @@ def decision_policy(agent, Z):
     Performs matrix version of equation 6 from the LinearRL paper
 
     Args:
-        agent (LinearRL class) : The LinearRL agent
+        agent (SR-IS class) : The SR-IS agent
         Z (array) : The Z-Values to operate on (usually just agent.Z)
 
     Returns:
@@ -444,7 +441,7 @@ def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
     Function to test the agent
 
     Args:
-        agent (LinearRL class) : The LinearRL agent
+        agent (SR-IS class) : The SR-IS agent
         policy (string) : Which policy to use, default is greedy
         state (tuple) : The starting state, default is none which sets the agent at the starting state of the maze
         term_state (tuple) : Check if we reach a specific terminal state
