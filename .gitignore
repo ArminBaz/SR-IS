@@ -8,9 +8,8 @@ __pycache__/
 .ipynb_checkpoints/
 .vscode/
 
-src/kahn-analysis/
-src/de-cothi-analysis/
 src/complex_maze.ipynb
+src/occupancy_map.ipynb
 
 gym-env/build/
 gym-env/dist/
