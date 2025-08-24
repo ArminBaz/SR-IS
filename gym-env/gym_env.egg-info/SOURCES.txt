@@ -20,6 +20,7 @@ gym_env/envs/maze_files/maze_10x10_G0.npy
 gym_env/envs/maze_files/maze_10x10_G1.npy
 gym_env/envs/maze_files/maze_10x10_G2.npy
 gym_env/envs/maze_files/maze_10x10_G3.npy
+gym_env/envs/maze_files/maze_11x11_2g.npy
 gym_env/envs/maze_files/maze_15x15.npy
 gym_env/envs/maze_files/maze_15x15_G0.npy
 gym_env/envs/maze_files/maze_15x15_G1.npy

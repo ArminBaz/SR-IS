@@ -69,6 +69,13 @@ register(
     max_episode_steps=2000,
 )
 
+# 11x11 two goals
+register(
+    id="maze-11x11-two-goal",
+    entry_point="gym_env.envs:MazeEnv11x11_2G",
+    max_episode_steps=2000,
+)
+
 # 10x10 with different goal states
 register(
     id="maze-10x10-G0",

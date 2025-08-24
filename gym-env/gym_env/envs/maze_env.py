@@ -328,6 +328,10 @@ class MazeEnv10x10_2G(MazeEnv):
     def __init__(self):
         super(MazeEnv10x10_2G, self).__init__(maze_file="maze_10x10_2g.npy")
 
+class MazeEnv11x11_2G(MazeEnv):
+    def __init__(self):
+        super(MazeEnv11x11_2G, self).__init__(maze_file="maze_11x11_2g.npy")
+
 class MazeEnvHairpin(MazeEnv):
     def __init__(self):
         super(MazeEnvHairpin, self).__init__(maze_file="hairpin_14x14.npy")
