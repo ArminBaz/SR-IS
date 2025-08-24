@@ -20,16 +20,16 @@ rat_SR = SR;
 rat_SR_IS = SR_imp;
 
 %% Humans
-dat = humans;
-SR = human_SR;
-SR_IS = human_SR_IS;
-species = 'Humans';
+% dat = humans;
+% SR = human_SR;
+% SR_IS = human_SR_IS;
+% species = 'Humans';
 
 %% Rats
-% dat = rat;
-% SR = rat_SR;
-% SR_IS = rat_SR_IS;
-% species = 'Rats';
+dat = rat;
+SR = rat_SR;
+SR_IS = rat_SR_IS;
+species = 'Rats';
 
 %% Dimensions
 [num_subj, num_mazes, num_start_locations] = size(dat);
@@ -133,8 +133,8 @@ set(gca, 'XTickLabel', {'SR', 'SR-IS'}, 'FontSize', 18, 'FontName', 'Times New R
 box off;
 
 % Save figure
-exportgraphics(gcf, [save_dir,'BarPlot_MazeDiffs_PathLength_', species, '.pdf'], ...
-               'ContentType', 'vector', 'BackgroundColor', 'none');
+% exportgraphics(gcf, [save_dir,'BarPlot_MazeDiffs_PathLength_', species, '.pdf'], ...
+%               'ContentType', 'vector', 'BackgroundColor', 'none');
 
 %% 2. SUBJECT ANALYSIS - Bar Plot
 avg_path_length_by_subject = squeeze(mean(lengths, [2, 3]));
@@ -213,5 +213,5 @@ set(gca, 'XTickLabel', {'SR', 'SR-IS'}, 'FontSize', 18, 'FontName', 'Times New R
 box off;
 
 % Save figure
-exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
-               'ContentType', 'vector', 'BackgroundColor', 'none');
+% exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
+%               'ContentType', 'vector', 'BackgroundColor', 'none');

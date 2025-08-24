@@ -20,16 +20,16 @@ rat_SR = SR;
 rat_SR_IS = SR_imp;
 
 %% Humans
-% dat = humans;
-% SR = human_SR;
-% SR_IS = human_SR_IS;
-% species = 'Humans';
+dat = humans;
+SR = human_SR;
+SR_IS = human_SR_IS;
+species = 'Humans';
 
 %% Rats
-dat = rat;
-SR = rat_SR;
-SR_IS = rat_SR_IS;
-species = 'Rats';
+% dat = rat;
+% SR = rat_SR;
+% SR_IS = rat_SR_IS;
+% species = 'Rats';
 
 %% Dimensions
 
@@ -102,11 +102,11 @@ plot([0.5, length(sr_is_maze_diffs)+0.5], [avg_SR_IS, avg_SR_IS], ...
 title(sprintf('Squared Maze Differences (%s)', species), 'FontSize', 22, 'FontWeight', 'normal', 'FontName', 'Times New Roman');
 xlabel('Maze Number', 'FontSize', 20, 'FontName', 'Times New Roman');
 ylabel('Squared Difference', 'FontSize', 20, 'FontName', 'Times New Roman');
-legend('show', 'Location', 'best', 'FontName', 'Times New Roman');
+legend('show', 'Location', 'best', 'FontSize', 16, 'FontName', 'Times New Roman');
 grid on;
 xlim([0.5, length(sr_maze_diffs)+0.5]);
-% exportgraphics(gcf, [save_dir,'MazeDiffs_PathLength_Humans.pdf'], 'ContentType', 'vector', 'BackgroundColor', 'none');
-exportgraphics(gcf, [save_dir,'MazeDiffs_PathLength_Rats.pdf'], 'ContentType', 'vector', 'BackgroundColor', 'none');
+exportgraphics(gcf, [save_dir,'MazeDiffs_PathLength_Humans.pdf'], 'ContentType', 'vector', 'BackgroundColor', 'none');
+% exportgraphics(gcf, [save_dir,'MazeDiffs_PathLength_Rats.pdf'], 'ContentType', 'vector', 'BackgroundColor', 'none');
 
 %% 2. Average path length for each subject (across all mazes and starting points)
 % Result: array of size (18,1) - one average per subject
@@ -162,11 +162,11 @@ plot([0.5, last_point], [avg_SR_IS, avg_SR_IS], ...
 title(sprintf('Squared Subject Differences (%s)', species), 'FontSize', 22, 'FontWeight', 'normal', 'FontName', 'Times New Roman');
 xlabel('Subject Number', 'FontSize', 20, 'FontName', 'Times New Roman');
 % ylabel('Squared Difference', 'FontSize', 16);
-legend('show', 'Location', 'best', 'FontName', 'Times New Roman');
+legend('show', 'Location', 'best', 'FontSize', 16, 'FontName', 'Times New Roman');
 grid on;
 xlim([0.5, last_point]);
-% exportgraphics(gcf, [save_dir,'SubjectDiffs_PathLength_Humans.pdf'], 'Resolution', 300, 'ContentType', 'vector');
-exportgraphics(gcf, [save_dir,'SubjectDiffs_PathLength_Rats.pdf'], 'Resolution', 300, 'ContentType', 'vector');
+exportgraphics(gcf, [save_dir,'SubjectDiffs_PathLength_Humans.pdf'], 'Resolution', 300, 'ContentType', 'vector');
+% exportgraphics(gcf, [save_dir,'SubjectDiffs_PathLength_Rats.pdf'], 'Resolution', 300, 'ContentType', 'vector');
 
 
 
