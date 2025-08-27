@@ -126,7 +126,7 @@ if h_maze
     ylim([0, new_max_tick]);
 end
 
-title(sprintf('Average Difference (%s)', species), ...
+title(sprintf('(%s)', species), ...
       'FontSize', 20, 'FontWeight', 'normal', 'FontName', 'Times New Roman');
 ylabel('Average Difference', 'FontSize', 18, 'FontName', 'Times New Roman');
 set(gca, 'XTickLabel', {'SR', 'SR-IS'}, 'FontSize', 18, 'FontName', 'Times New Roman');
@@ -206,12 +206,12 @@ if h_subj
     set(gca, 'YTick', [current_ticks, new_max_tick]);
 end
 
-title(sprintf('Average Differences (%s)', species), ...
+title(sprintf('%s', species), ...
       'FontSize', 20, 'FontWeight', 'normal', 'FontName', 'Times New Roman');
 ylabel('Average Difference', 'FontSize', 18, 'FontName', 'Times New Roman');
 set(gca, 'XTickLabel', {'SR', 'SR-IS'}, 'FontSize', 18, 'FontName', 'Times New Roman');
 box off;
 
 % Save figure
-% exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
-%               'ContentType', 'vector', 'BackgroundColor', 'none');
+exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
+    'ContentType', 'vector', 'BackgroundColor', 'none');
