@@ -606,13 +606,11 @@ class SR_TD:
             if v_sum == 0:
                 return self.env.unwrapped.random_action(), None
 
-            exp_idx = 0
             for action in self.env.unwrapped.get_available_actions(state):
-                action_probs[action] = exp_values[exp_idx] / v_sum
-                exp_idx += 1
-            
+                direction = self.env.unwrapped._action_to_direction[action]
+                new_state = state + direction
+                action_probs[action] = np.exp(self.V[self.mapping[(new_state[0], new_state[1])]] / self.beta) / v_sum
             action = np.random.choice(self.env.action_space.n, p=action_probs)
-
             return action, None
             
         elif self.policy == "greedy":
