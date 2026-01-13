@@ -5,8 +5,7 @@ maze = 22;
 %% Load paths
 % Humans
 load('Humans/humans.mat')
-load('Humans/SR_imp_alpha0.6_gamma0.5.mat')
-% load('Humans/SR_imp_test.mat')
+load('Humans/SR_IS.mat')
 load('Humans/SR.mat')
 
 human_SR = SR;
@@ -14,7 +13,7 @@ human_SR_imp = SR_imp;
 
 % Rats
 load('Rats/rat.mat')
-load('Rats/SR_imp_alpha0.6_gamma0.5.mat')
+load('Rats/SR_IS.mat')
 load('Rats/SR.mat')
 
 rat_SR = SR;
@@ -76,7 +75,7 @@ set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 5 4]);
 
 % Save human correlation
-exportgraphics(gcf, [save_dir,'length_corr_human_maze22.png'], 'Resolution', 300);
+% exportgraphics(gcf, [save_dir,'length_corr_human_maze22.png'], 'Resolution', 300);
 
 %% Rat correlation
 n_ppt = 9;
@@ -123,4 +122,4 @@ set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 5 4]);
 
 % Save rat correlation
-exportgraphics(gcf, [save_dir,'length_corr_rat_maze22.png'], 'Resolution', 300);
+% exportgraphics(gcf, [save_dir,'length_corr_rat_maze22.png'], 'Resolution', 300);

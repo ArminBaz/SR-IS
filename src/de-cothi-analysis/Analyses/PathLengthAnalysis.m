@@ -97,7 +97,7 @@ ax.XAxis.FontSize = 16;
 ax.Title.FontSize = 18;
 set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 8 3]);
-exportgraphics(gcf, [save_dir,'human_maze15.pdf'], 'Resolution', 300);
+% exportgraphics(gcf, [save_dir,'human_maze15.pdf'], 'Resolution', 300);
 
 %% Plot median trajectories across starting locations for rats
 maze_index = 15;
@@ -157,4 +157,4 @@ ax.XAxis.FontSize = 16;
 ax.Title.FontSize = 18;
 set(gcf, 'Units', 'inches');
 set(gcf, 'Position', [0 0 8 3]);
-exportgraphics(gcf, [save_dir,'rat_maze15.pdf'], 'Resolution', 300);
+% exportgraphics(gcf, [save_dir,'rat_maze15.pdf'], 'Resolution', 300);

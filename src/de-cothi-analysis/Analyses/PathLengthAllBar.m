@@ -8,6 +8,9 @@ load('Humans/humans.mat')
 load('Humans/SR_IS.mat')
 load('Humans/SR.mat')
 
+% load('Humans/MB.mat')
+% human_SR = MB;
+
 human_SR = SR;
 human_SR_IS = SR_imp;
 
@@ -16,20 +19,23 @@ load('Rats/rat.mat')
 load('Rats/SR_IS.mat')
 load('Rats/SR.mat')
 
+% load('Rats/MB.mat')
+% rat_SR = MB;
+
 rat_SR = SR;
 rat_SR_IS = SR_imp;
 
 %% Humans
-% dat = humans;
-% SR = human_SR;
-% SR_IS = human_SR_IS;
-% species = 'Humans';
+dat = humans;
+SR = human_SR;
+SR_IS = human_SR_IS;
+species = 'Humans';
 
 %% Rats
-dat = rat;
-SR = rat_SR;
-SR_IS = rat_SR_IS;
-species = 'Rats';
+% dat = rat;
+% SR = rat_SR;
+% SR_IS = rat_SR_IS;
+% species = 'Rats';
 
 %% Dimensions
 [num_subj, num_mazes, num_start_locations] = size(dat);
@@ -213,5 +219,5 @@ set(gca, 'XTickLabel', {'SR', 'SR-IS'}, 'FontSize', 18, 'FontName', 'Times New R
 box off;
 
 % Save figure
-exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
-    'ContentType', 'vector', 'BackgroundColor', 'none');
+% exportgraphics(gcf, [save_dir,'BarPlot_SubjectDiffs_PathLength_', species, '.pdf'], ...
+%    'ContentType', 'vector', 'BackgroundColor', 'none');
