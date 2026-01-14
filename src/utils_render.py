@@ -308,7 +308,7 @@ def create_bar_plot(means, colors, ylabel, xlabels, y_lim=None, std=None, title=
     fig, ax = plt.subplots(figsize=(6, 5))
     x = np.arange(len(means)) * 0.25
     
-    plot_means = np.array(means).copy()
+    plot_means = np.array(means, dtype=float).copy()
     min_visible_height = 0.02
     plot_means[plot_means < 0.1] = min_visible_height
     
@@ -317,10 +317,10 @@ def create_bar_plot(means, colors, ylabel, xlabels, y_lim=None, std=None, title=
     if std is not None:
         ax.errorbar(x, means, yerr=std, fmt='none', color='black', capsize=0)
     
-    ax.set_ylabel(ylabel, fontsize=14)
-    ax.set_title(title, fontsize=18) if title else None
+    ax.set_ylabel(ylabel, fontsize=18)
+    ax.set_title(title, fontsize=20) if title else None
     ax.set_xticks(x)
-    ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=14)
+    ax.set_xticklabels(xlabels, rotation=0, ha='center', fontsize=18)
     
     if y_lim is None:
         ax.set_yticks(np.arange(0, 1.01, 0.2))
