@@ -74,8 +74,8 @@ if __name__ == '__main__':
     save_path_humans = os.path.join('figures/') + 'model_comparison_humans.png'
     
     create_bar_plot(means=mean_rats, colors=[1, 3, 0, 2],
-                    ylabel=None, xlabels=['MF', 'MB', 'SR', 'SR-IS'], 
+                    ylabel='Num Participants', xlabels=['MF', 'MB', 'SR', 'SR-IS'], 
                     y_lim=[0, 10], title="Rats", save_path=save_path_rats)
     create_bar_plot(means=mean_humans, colors=[1, 3, 0, 2],
                     ylabel='Num Participants', xlabels=['MF', 'MB', 'SR', 'SR-IS'], 
-                    y_lim=[0, 15], title="Humans", save_path=save_path_humans)
+                    y_lim=[0, 15], title="Humans", save_path=None)
