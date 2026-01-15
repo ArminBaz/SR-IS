@@ -333,6 +333,10 @@ def create_bar_plot(means, colors, ylabel, xlabels, y_lim=None, std=None, title=
         ax.spines[spine].set_color('black')
         ax.spines[spine].set_linewidth(1)
     
+    for spine in ['right', 'top']:
+        # ax.spines[spine].set_color('black')
+        ax.spines[spine].set_linewidth(0)
+    
     ax.grid(False)
     
     ax.set_facecolor('white')
