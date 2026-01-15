@@ -924,3 +924,251 @@ class SR_NHB:
             # Update state
             state = next_state
             self.agent_loc = state
+
+
+class MB_NHB:
+    def __init__(self, beta=1, policy="random", exp_type="policy_reval"):
+        self.exp_type = exp_type
+        self.size = 6
+        
+        # Construct the transition probability matrix and envstep functions
+        self.T = self.construct_T()
+        self.envstep = gen_nhb_exp_SR()
+
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+        self.nonterminals = ~self.terminals
+
+        # Set reward
+        self.reward_nt = 1
+        self.r = np.full(len(self.T), self.reward_nt)
+        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        if self.exp_type == "policy_reval":
+            self.r_term_1 = [0, 15, 30]
+            self.r_term_2 = [45, 15, 30]
+        elif self.exp_type == "reward_reval":
+            self.r_term_1 = [15, 0, 30]
+            self.r_term_2 = [45, 0, 30]
+        else:
+            print("Incorrect experiment type (exp_type)")
+            return(0)
+        self.r[self.terminals] = self.r_term_1
+        
+        # Params
+        self.beta = beta
+        self.policy = policy
+
+        # Model
+        self.V = np.zeros(self.size)
+
+    def construct_T(self):
+        T = np.zeros((6, 6))
+        T[0,1] = 0.5
+        T[0,2] = 0.5
+        T[1,3] = 0.5
+        T[1,4] = 0.5
+        T[2,4] = 0.5
+        T[2,5] = 0.5
+        T[3:6, 3:6] = np.eye(3)
+
+        return T
+    
+    def construct_T_new(self):
+        T = np.zeros((6, 6))
+        T[0, 1:3] = 0.5
+        T[1, 4:6] = 0.5
+        T[2, 3:5] = 0.5
+        T[3:6, 3:6] = np.eye(3)
+
+        return T
+    
+    def update_exp(self):
+        if self.exp_type in ["reward_reval", "policy_reval"]:
+            self.r[self.terminals] = self.r_term_2
+            
+    def gen_new_envstep(self):
+        envstep=[]
+        for s in range(6):
+            # actions 0=left, 1=right
+            envstep.append([[0,0], [0,0]])  # [s', done]
+        envstep = np.array(envstep)
+
+        # State 0 -> 1, 2
+        envstep[0,0] = [1,0]
+        envstep[0,1] = [2,0]
+
+        # State 1 -> 4, 5
+        envstep[1,0] = [4,1]
+        envstep[1,1] = [5,1]
+
+        # State 2 -> 3, 4
+        envstep[2,0] = [3,1]
+        envstep[2,1] = [4,1]
+        
+        return envstep
+    
+    def _get_succ_states(self, state):
+        return np.where(self.T[state, :] != 0)[0]
+    
+    def select_action(self, state):
+        if self.policy == "random":
+            successor_states = self._get_succ_states(state)
+            return np.random.choice([0,1])
+
+        elif self.policy == "softmax":
+            successor_states = self._get_succ_states(state)
+            action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
+
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.beta)
+            action_probs = exp_V / exp_V.sum()
+
+            action = np.random.choice([0,1], p=action_probs)
+
+            return action
+    
+    def update_V(self):
+        self.V[self.terminals] = self.r[self.terminals]
+
+        # Nonterminals: propagate backward
+        for _ in range(self.size):
+            for s in range(self.size):
+                if self.nonterminals[s]:
+                    # Find neighbors
+                    neighbors = self._get_succ_states(s)
+                    if len(neighbors) > 0:
+                        # V[s] = max value of neighbors
+                        self.V[s] = np.max(self.V[neighbors])
+                        
+    def learn_trans_reval(self, seed=None):
+        # update T and envstep
+        T_new = self.construct_T_new()
+        new_envstep = self.gen_new_envstep()
+
+        self.envstep = new_envstep
+        self.T = T_new
+
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        self.update_V()
+
+
+class Hybrid_NHB:
+    """
+    Hybrid model combining SR (Successor Representation) and MB (Model-Based) approaches.
+
+    The SR model is trained for num_steps, the MB model calculates values directly,
+    and the final value is a weighted combination: V = w_sr * V_SR + w_mb * V_MB
+
+    Args:
+        alpha (float): Learning rate for SR model
+        beta (float): Temperature parameter for softmax action selection
+        gamma (float): Discount factor for SR model
+        num_steps (int): Number of training steps for SR model
+        policy (str): Decision policy ("random" or "softmax")
+        exp_type (str): Experiment type ("policy_reval" or "reward_reval")
+        w_sr (float): Weight for SR model values (default 0.5)
+        w_mb (float): Weight for MB model values (default 0.5)
+    """
+    def __init__(self, alpha=0.1, beta=1, gamma=0.904, num_steps=25000, policy="random", exp_type="policy_reval", w_sr=0.5, w_mb=0.5):
+        # Initialize SR model
+        self.sr_model = SR_NHB(alpha=alpha, beta=beta, gamma=gamma, num_steps=num_steps, policy=policy, exp_type=exp_type)
+
+        # Initialize MB model
+        self.mb_model = MB_NHB(beta=beta, policy=policy, exp_type=exp_type)
+
+        # Hybrid weights
+        self.w_sr = w_sr
+        self.w_mb = w_mb
+
+        # Copy common attributes for convenience
+        self.size = self.sr_model.size
+        self.terminals = self.sr_model.terminals
+        self.exp_type = exp_type
+        self.T = self.sr_model.T
+        self.r = self.sr_model.r
+        self.envstep = self.sr_model.envstep
+
+        # Combined value
+        self.V = np.zeros(self.size)
+
+    def update_exp(self):
+        """Update both models for revaluation experiments."""
+        self.sr_model.update_exp()
+        self.mb_model.update_exp()
+        # Update local reward reference
+        self.r = self.sr_model.r
+
+    def update_V(self):
+        """Combine SR and MB values using weighted average."""
+        self.sr_model.update_V()
+        self.mb_model.update_V()
+        self.V = self.w_sr * self.sr_model.V + self.w_mb * self.mb_model.V
+
+    def learn(self, seed=None):
+        """
+        Train the hybrid model:
+        1. Train SR model for num_steps
+        2. Calculate MB values (no training needed)
+        3. Combine values with weights
+        """
+        # Train the SR model
+        self.sr_model.learn(seed=seed)
+
+        # Calculate MB values (no training needed)
+        self.mb_model.update_V()
+
+        # Combine values
+        self.update_V()
+
+    def learn_with_start_locs(self, seed=None):
+        """
+        Train using predefined start locations:
+        1. Train SR model with start locations
+        2. Calculate MB values
+        3. Combine values with weights
+        """
+        # Train the SR model
+        self.sr_model.learn_with_start_locs(seed=seed)
+
+        # Calculate MB values (no training needed)
+        self.mb_model.update_V()
+
+        # Combine values
+        self.update_V()
+
+    def learn_trans_reval(self, seed=None):
+        """
+        Handle transition revaluation:
+        1. Update SR model with new transitions
+        2. Update MB model with new transitions
+        3. Combine values
+        """
+        # Update SR model for transition revaluation
+        self.sr_model.learn_trans_reval(seed=seed)
+
+        # Update MB model for transition revaluation
+        self.mb_model.learn_trans_reval(seed=seed)
+
+        # Update local references
+        self.T = self.sr_model.T
+        self.envstep = self.sr_model.envstep
+
+        # Combine values
+        self.update_V()
+
+    def get_successor_states(self, state):
+        """Get successor states (delegates to SR model)."""
+        return self.sr_model.get_successor_states(state)
+
+    def select_action(self, state):
+        """Select action based on hybrid values."""
+        if self.sr_model.policy == "random":
+            return np.random.choice([0, 1])
+        elif self.sr_model.policy == "softmax":
+            successor_states = self.get_successor_states(state)
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.sr_model.beta)
+            action_probs = exp_V / exp_V.sum()
+            return np.random.choice([0, 1], p=action_probs)
