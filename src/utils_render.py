@@ -159,19 +159,7 @@ def render_maze_dc(maze, save_path=None, title=None):
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
-def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, ylabel=None, std=None, remove_spine=False):
-    """
-    Plots the decision probability of going towards a terminal state
-
-    Args:
-        probs_train (array) : Probability of heading towards each terminal state before policy revaluation
-        probs_test (array) : Probability of heading towrads each terminal state after policy revaluation
-        colors (array) : idx of color pallette color to use 
-        leg_loc (string, Optional) : Location to place the legend
-        save_path (string, Optional) : File path to save the image to
-        title (string, Optional) : Title of the figure
-        std (list [std_train, std_test], Optional) : Std deviations for both training and test
-    """
+def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, ylabel=None, std=None, remove_spine=False, ymax=None, start_i=0):
     plt.rcParams['font.family'] = 'serif'
     color_palette = sns.color_palette("colorblind")
     color_list = []
@@ -199,18 +187,22 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
 
     if leg_loc is not None:
-        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=14)
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1+start_i}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=14)
     else:
-        plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=14)
+        plt.legend(handles, [f'$\mathrm{{s}}_{i+1+start_i}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=14)
     
     if ylabel is not None:
         plt.ylabel(ylabel, fontsize=18)
     plt.xticks([0.2, 1.7], ['Training', 'Test'], fontsize=18)
 
     # Set custom y-axis ticks
-    max_prob = max(max(probs_train), max(probs_test))
-    y_ticks = np.arange(0, max_prob + 0.1, 0.1)
-    plt.yticks(y_ticks)
+    if ymax is None:
+        max_prob = max(max(probs_train), max(probs_test))
+        y_ticks = np.arange(0, max_prob + 0.1, 0.1)
+        plt.yticks(y_ticks)
+    else:
+        y_ticks = np.arange(0, ymax + 0.1, 0.2)
+        plt.yticks(y_ticks)
 
     if title is not None:
         plt.title(title, fontsize=20)

@@ -436,6 +436,73 @@ def gen_two_step():
     
     return envstep
 
+class TwoStepStochastic:
+    def __init__(self, size=7, prob_common=0.5, seed=None, stoch_states={1}):
+        self.size = size
+        self.prob_common = prob_common
+        self.rng = np.random.RandomState(seed)
+        
+        self.envstep = self._build_transition_table()
+        self.stochastic_states = stoch_states
+        
+    def _build_transition_table(self):
+        """Build the base transition lookup table."""
+        envstep = []
+        for s in range(self.size):
+            envstep.append([[0, 0], [0, 0]])
+        envstep = np.array(envstep)
+        
+        # State 0 -> 1, 2 (deterministic)
+        envstep[0, 0] = [1, 0]
+        envstep[0, 1] = [2, 0]
+        
+        # State 1 -> 3, 4 (stochastic)
+        envstep[1, 0] = [3, 1]  # common for action 0
+        envstep[1, 1] = [4, 1]  # common for action 1
+        
+        # State 2 -> 5, 6
+        envstep[2, 0] = [5, 1]
+        envstep[2, 1] = [6, 1]
+        
+        return envstep
+        
+    def step_deterministic(self, state, action):
+        state, done = self.envstep[state, action]
+        return state, done
+
+    def step(self, state, action):
+        # Get the "common" transition for this action
+        common_state, done = self.envstep[state, action]
+        
+        # Handle stochastic transitions
+        if state in self.stochastic_states:
+            if self.rng.random() < self.prob_common:
+                # Common transition
+                next_state = common_state
+            else:
+                # Rare transition (flip to the other action's common state)
+                rare_action = 1 - action
+                next_state = self.envstep[state, rare_action][0]
+        else:
+            # Deterministic transition
+            next_state = common_state
+            
+        return next_state, done
+    
+    def reset(self):
+        """Reset to initial state."""
+        return 0
+    
+    def get_transition_type(self, state, action, next_state):
+        if state not in self.stochastic_states:
+            return 'deterministic'
+        
+        common_state = self.envstep[state, action][0]
+        if next_state == common_state:
+            return 'common'
+        else:
+            return 'rare'
+
 def test_agent(agent, policy="greedy", state=None, seed=None, term_state=None):
     """
     Function to test the agent
