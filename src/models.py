@@ -2,7 +2,7 @@ import numpy as np
 import gymnasium as gym
 
 import gym_env
-from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_nhb_exp_SR, gen_two_step, exponential_decay
+from utils import get_transition_matrix, create_mapping_nb, gen_nhb_exp, gen_nhb_exp_SR, exponential_decay, TwoStepStochastic
 
 
 class SR_IS:
@@ -893,7 +893,6 @@ class SR_NHB:
             # Update Values
             self.update_V()
 
-
     def learn(self, seed=None):
         """
         Agent explores the maze according to its decision policy and and updates its DR as it goes
@@ -1166,6 +1165,396 @@ class Hybrid_NHB:
         """Select action based on hybrid values."""
         if self.sr_model.policy == "random":
             return np.random.choice([0, 1])
+        elif self.sr_model.policy == "softmax":
+            successor_states = self.get_successor_states(state)
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.sr_model.beta)
+            action_probs = exp_V / exp_V.sum()
+            return np.random.choice([0, 1], p=action_probs)
+
+
+class SR_IS_TwoStep:
+    def __init__(self, alpha=0.25, beta=1.0, _lambda=1, num_steps=250, policy="softmax", imp_samp=True, seed=None):
+        # Hard code start and end locations as well as size
+        self.start_loc = 0
+        self.target_locs = [3,4,5,6]
+        self.start_locs = [0]
+        self.size = 7
+        self.agent_loc = self.start_loc
+        self.seed = seed
+
+        # Construct the transition probability matrix and env
+        self.T = self.construct_T()
+        self.env = TwoStepStochastic(size=7, prob_common=0.5, seed=self.seed)
+        
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+        # Calculate P = T_{NT}
+        self.P = self.T[~self.terminals][:,self.terminals]
+
+        # Set reward
+        self.reward_nt = -0.1
+        self.r = np.full(len(self.T), self.reward_nt)
+        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        self.r[self.terminals] = [10,-10,0,1]
+
+        # Precalculate exp(r) for use with LinearRL equations
+        self.expr_t = np.exp(self.r[self.terminals] / _lambda)
+        self.expr_nt = np.exp(self.reward_nt / _lambda)
+
+        # Params
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = self.expr_nt
+        self._lambda = _lambda
+        self.num_steps = num_steps
+        self.policy = policy
+        self.imp_samp = imp_samp
+
+        # Model
+        self.DR = self.get_DR()
+        self.Z = np.full(self.size, 0.01)
+
+        self.V = np.zeros(self.size)
+        self.one_hot = np.eye(self.size)
+
+    def construct_T(self):
+        # For two-step task
+        T = np.zeros((self.size, self.size))
+        T[0, 1:3] = 0.5
+        T[1, 3:5] = 0.5
+        T[2, 5:7] = 0.5
+        T[3:7, 3:7] = np.eye(4)
+
+        return T
+
+    def get_DR(self):
+        if self.policy == "softmax":
+            DR = np.full((self.size, self.size), 0.01)
+            np.fill_diagonal(DR, 1)
+            DR[np.where(self.terminals)[0], np.where(self.terminals)[0]] = (1/(self.gamma))
+        else:
+            DR = np.eye(self.size)
+
+        return DR
+    
+    def update_exp(self):
+        self.r[self.terminals] = [14,-10,0,1]
+
+    def update_Z(self):
+        self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
+        self.Z[self.terminals] = self.expr_t
+
+    def update_V(self):
+        self.V = np.log(self.Z) * self._lambda
+    
+    def get_successor_states(self, state):
+        return np.where(self.T[state, :] != 0)[0]
+
+    def importance_sampling(self, state, s_prob):
+        successor_states = self.get_successor_states(state)
+        p = 1/len(successor_states)
+        w = p/s_prob
+                
+        return w
+
+    def select_action(self, state):
+        if self.policy == "random":
+            action = np.random.choice([0,1])
+
+            return action
+        
+        elif self.policy == "softmax":
+            successor_states = self.get_successor_states(state)
+            action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
+
+            v_sum = sum(np.exp((np.log(self.Z[s] + 1e-20) * self._lambda) / self.beta) for s in successor_states)
+
+            # if we don't have enough info, random action
+            if v_sum == 0:
+                return  np.random.choice([0,1])
+
+            for action in [0,1]:
+                new_state, _ = self.env.step_deterministic(state, action)
+                action_probs[action] = np.exp((np.log(self.Z[new_state] + 1e-20) * self._lambda) / self.beta ) / v_sum
+                
+            action = np.random.choice([0,1], p=action_probs)
+            s_prob = action_probs[action]
+
+            return action, s_prob
+
+    def get_D_inv(self):
+        I = np.eye(self.size)
+        D_inv = np.linalg.inv(I-self.gamma*self.T)
+        
+        return D_inv
+
+    def learn(self):
+        if self.seed is not None:
+            np.random.seed(seed=self.seed)
+
+        for i in range(self.num_steps):
+            # Agent gets some knowledge of terminal state values
+            if i == 2:
+                self.Z[self.terminals] = self.expr_t
+            state = self.agent_loc
+
+            if self.policy == "softmax":
+                action, s_prob = self.select_action(state)
+            else:
+                action = self.select_action(state)
+        
+            next_state, done = self.env.step(state, action)
+
+            if self.imp_samp:
+                w = self.importance_sampling(state, s_prob)
+                w = 1 if np.isnan(w) or w == 0 else w
+            else:
+                w = 1
+            
+            target = self.one_hot[state] + self.gamma * self.DR[next_state]
+            self.DR[state] = (1 - self.alpha) * self.DR[state] + self.alpha * target * w
+
+            self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
+            
+            # print(f"state: {state}| action: {action}| next state: {next_state}")
+            
+            if done:
+                self.agent_loc = self.start_loc
+                continue
+            
+            # Update state
+            state = next_state
+            self.agent_loc = state
+
+        # Update DR at terminal state
+        self.update_Z()
+        self.update_V()
+
+
+class SR_TwoStep:
+    def __init__(self, alpha=0.25, beta=1.0, gamma=0.904, num_steps=250, policy="softmax", seed=None):
+        # Hard code start and end locations as well as size
+        self.start_loc = 0
+        self.target_locs = [3,4,5,6]
+        self.start_locs = [0]
+        self.size = 7
+        self.agent_loc = self.start_loc
+        self.seed = seed
+
+        # Construct the transition probability matrix and env
+        self.T = self.construct_T()
+        self.env = TwoStepStochastic(size=7, prob_common=0.5, seed=self.seed)
+        
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+        # Calculate P = T_{NT}
+        self.P = self.T[~self.terminals][:,self.terminals]
+
+        # Set reward
+        self.reward_nt = 1
+        self.r = np.full(len(self.T), self.reward_nt)
+        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        self.r[self.terminals] = [10,-10,0,1]
+
+        # Params
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.num_steps = num_steps
+        self.policy = policy
+
+        # Model
+        self.SR = np.eye(self.size)
+        self.V = np.zeros(self.size)
+        self.one_hot = np.eye(self.size)
+
+    def construct_T(self):
+        # For two-step task
+        T = np.zeros((self.size, self.size))
+        T[0, 1:3] = 0.5
+        T[1, 3:5] = 0.5
+        T[2, 5:7] = 0.5
+        T[3:7, 3:7] = np.eye(4)
+
+        return T
+
+    def update_exp(self):
+        self.r[self.terminals] = [14,-10,0,1]
+    
+    def update_V(self):
+        self.V = self.SR @ self.r
+    
+    def get_successor_states(self, state):
+        return np.where(self.T[state, :] != 0)[0]
+
+    def select_action(self, state):
+        if self.policy == "random":
+            successor_states = self.get_successor_states(state)
+            return np.random.choice([0,1])
+        
+        elif self.policy == "softmax":
+            successor_states = self.get_successor_states(state)
+            action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
+
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.beta)
+            action_probs = exp_V / exp_V.sum()
+
+            action = np.random.choice([0,1], p=action_probs)
+
+            return action
+
+    def learn(self, seed=None):
+        if seed is not None:
+            np.random.seed(seed=seed)
+
+        for i in range(self.num_steps):
+            state = self.agent_loc
+            action = self.select_action(state)
+
+            next_state, done = next_state, done = self.env.step(state, action)
+
+            self.SR[state] = (1-self.alpha)* self.SR[state] + self.alpha * ( self.one_hot[state] + self.gamma * self.SR[next_state]  )
+
+            self.update_V()
+
+            if done:
+                self.agent_loc = self.start_loc
+                continue
+
+            state = next_state
+            self.agent_loc = state
+
+
+class MB_TwoStep:
+    def __init__(self, beta=1.0, gamma=1, policy="softmax", seed=None):
+        # Hard code start and end locations as well as size
+        self.start_loc = 0
+        self.target_locs = [3,4,5,6]
+        self.size = 7
+        self.seed = seed
+
+        # Construct the transition probability matrix and env
+        self.T = self.construct_T()
+        self.env = TwoStepStochastic(size=7, prob_common=0.5, seed=self.seed)
+        
+        # Get terminal states
+        self.terminals = np.diag(self.T) == 1
+        self.nonterminals = ~self.terminals
+        # Calculate P = T_{NT}
+        self.P = self.T[~self.terminals][:,self.terminals]
+
+        # Set reward
+        self.reward_nt = 1
+        self.r = np.full(len(self.T), self.reward_nt)
+        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        self.r[self.terminals] = [10,-10,0,1]
+
+        # Params
+        self.beta = beta
+        self.gamma = gamma
+        self.policy = policy
+
+        # Model
+        self.SR = np.eye(self.size)
+        self.V = np.zeros(self.size)
+        self.one_hot = np.eye(self.size)
+
+    def construct_T(self):
+        # For two-step task
+        T = np.zeros((self.size, self.size))
+        T[0, 1:3] = 1.0
+        T[1, 3:5] = 0.5
+        T[2, 5] = 1.0
+        T[2, 6] = 1.0
+        T[3:7, 3:7] = np.eye(4)
+
+        return T
+
+    def update_exp(self):
+        self.r[self.terminals] = [14,-10,0,1]
+    
+    def _get_succ_states(self, state):
+        return np.where(self.T[state, :] != 0)[0]
+    
+    def update_V(self):
+        self.V[self.terminals] = self.r[self.terminals]
+        
+        for s in range(self.size):
+            if self.nonterminals[s]:
+                neighbors = self._get_succ_states(s)
+                
+                if len(neighbors) > 0:
+                    if s == 1:  # State 2 is stochastic
+                        self.V[s] = 0.5 * self.V[3] + 0.5 * self.V[4]
+                    else:  # States 0 and 2 are deterministic
+                        self.V[s] = np.max(self.V[neighbors])
+
+    def select_action(self, state):
+        if self.policy == "random":
+            successor_states = self._get_succ_states(state)
+            return np.random.choice([0,1])
+        
+        elif self.policy == "softmax":
+            successor_states = self._get_succ_states(state)
+            action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
+
+            V = self.V[successor_states]
+            exp_V = np.exp(V / self.beta)
+            action_probs = exp_V / exp_V.sum()
+
+            action = np.random.choice([0,1], p=action_probs)
+
+            return action
+
+
+class Hybrid_TwoStep:
+    def __init__(self, alpha=0.25, beta=1.0, gamma_sr=0.904, gamma_mb=1, num_steps=250, 
+                 policy="softmax", w_sr=0.5, w_mb=0.5, seed=None):
+        # SR model
+        self.sr_model = SR_TwoStep(alpha=alpha, beta=beta, gamma=gamma_sr, 
+                                   num_steps=num_steps, policy=policy, seed=seed)
+
+        # MB model
+        self.mb_model = MB_TwoStep(beta=beta, gamma=gamma_mb, policy=policy, seed=seed)
+
+        self.w_sr = w_sr
+        self.w_mb = w_mb
+
+        self.size = self.sr_model.size
+        self.terminals = self.sr_model.terminals
+        self.T = self.sr_model.T
+        self.r = self.sr_model.r
+        self.env = self.sr_model.env
+        self.seed = seed
+
+        self.V = np.zeros(self.size)
+
+    def update_exp(self):
+        self.sr_model.update_exp()
+        self.mb_model.update_exp()
+        self.r = self.sr_model.r
+
+    def update_V(self):
+        self.sr_model.update_V()
+        self.mb_model.update_V()
+        self.V = self.w_sr * self.sr_model.V + self.w_mb * self.mb_model.V
+
+    def learn(self, seed=None):
+        self.sr_model.learn(seed=seed)
+
+        self.mb_model.update_V()
+
+        self.update_V()
+
+    def get_successor_states(self, state):
+        return self.sr_model.get_successor_states(state)
+
+    def select_action(self, state):
+        if self.sr_model.policy == "random":
+            return np.random.choice([0, 1])
+        
         elif self.sr_model.policy == "softmax":
             successor_states = self.get_successor_states(state)
             V = self.V[successor_states]
