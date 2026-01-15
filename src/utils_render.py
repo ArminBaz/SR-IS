@@ -159,7 +159,7 @@ def render_maze_dc(maze, save_path=None, title=None):
     if save_path is not None:
         plt.savefig(save_path, bbox_inches='tight', dpi=300)
 
-def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, std=None):
+def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, ylabel=None, std=None, remove_spine=False):
     """
     Plots the decision probability of going towards a terminal state
 
@@ -203,7 +203,8 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
     else:
         plt.legend(handles, [f'$\mathrm{{s}}_{i+1}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=14)
     
-    plt.ylabel('Probabilities', fontsize=18)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=18)
     plt.xticks([0.2, 1.7], ['Training', 'Test'], fontsize=18)
 
     # Set custom y-axis ticks
@@ -213,6 +214,11 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     if title is not None:
         plt.title(title, fontsize=20)
+    
+    if remove_spine:
+        ax = plt.gca()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
 
     # Save the image
     if save_path is not None:
