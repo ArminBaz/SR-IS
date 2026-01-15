@@ -44,6 +44,10 @@ model_names = {'MF', 'MB', 'SR', 'SR-IS'};
 n_params = [k_MF, k_MB, k_SR, k_SR_IS]';
 n_datapoints = 25 * 10;
 BIC = -2*lliks_per_subject + n_params .* log(n_datapoints);
+lme = lliks_per_subject - 0.5*(n_params .* log(n_datapoints));
+
+% Use log model evidence in CBM
+[alpha,mf,xp,pxp,bor,g] = cbm_spm_BMS(lme');
 
 % Compare models
 [~, best_model_per_subject] = min(BIC, [], 1);
@@ -61,7 +65,14 @@ model_counts = histcounts(best_model_per_subject, 0.5:(n_models+0.5));
 fprintf('Number of subjects best fit by each model:\n');
 for i = 1:n_models
     fprintf('  %s: %d subjects (%.1f%%)\n', ...
-            model_names{i}, model_counts(i), ...
+            model_names{i}, model_counts(i), pxp(i));
+end
+
+fprintf('\n')
+fprintf('CBM fitting results:\n');
+for i = 1:n_models
+    fprintf('  %s - model frequency: %.2f%% | protected xp: %.2f%%)\n', ...
+            model_names{i}, mf(i), ...
             100*model_counts(i)/n_subjects);
 end
 
