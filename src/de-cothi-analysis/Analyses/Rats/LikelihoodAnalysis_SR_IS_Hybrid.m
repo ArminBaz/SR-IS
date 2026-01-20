@@ -150,7 +150,7 @@ set(gca,'FontSize',20)
 set(gcf,'color','w');
 set(gca,'LineWidth',2)
 yticks([1,2,3,4,5])
-yticklabels({'MF','MB','SR','Hybrid','SR-IS'})
+yticklabels({'MF','MB','SR','Hybrid SR+MB','SR-IS'})
 colormap jet
 cb = colorbar;
 caxis([0.0,0.03])
