@@ -218,6 +218,65 @@ def plot_decision_prob(probs_train, probs_test, colors, leg_loc=None, save_path=
 
     plt.show()
 
+def plot_decision_prob_two_step(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None, ylabel=None, std=None, remove_spine=False, ymax=None, start_i=0):
+    plt.rcParams['font.family'] = 'serif'
+    color_palette = sns.color_palette("colorblind")
+    color_list = []
+    for color in colors:
+        color_list.append(color_palette[color])
+
+    bar_positions_training = np.arange(len(probs_train)) * 0.4
+    bar_positions_test = np.arange(len(probs_train)) * 0.4 + 1.5
+
+    # Minimum height if small prob
+    probs_train = np.array(probs_train)
+    probs_test = np.array(probs_test)
+    min_visible_height = 0.02
+    probs_train[probs_train < 0.05] = min_visible_height
+    probs_test[probs_test < 0.05] = min_visible_height
+
+    plt.bar(bar_positions_training, probs_train, width=0.3, color=color_list, edgecolor='black')
+    plt.bar(bar_positions_test, probs_test, width=0.3, color=color_list, edgecolor='black')
+
+    # Add error bars if std is provided
+    if std is not None:
+        plt.errorbar(bar_positions_training, probs_train, yerr=std[0], fmt='none', ecolor='black', capsize=0)
+        plt.errorbar(bar_positions_test, probs_test, yerr=std[1], fmt='none', ecolor='black', capsize=0)
+
+    handles = [plt.Rectangle((0,0),1,1, facecolor=color_list[i], edgecolor='black') for i in range(len(probs_train))]
+
+    if leg_loc is not None:
+        plt.legend(handles, [f'$\mathrm{{S}}_{i+1+start_i}$' for i in range(len(probs_train))], title='States', loc=leg_loc, fontsize=14)
+    else:
+        plt.legend(handles, [f'$\mathrm{{S}}_{i+1+start_i}$' for i in range(len(probs_train))], title='States', loc='upper right', fontsize=14)
+    
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=18)
+    plt.xticks([0.2, 1.7], ['Before\nrevaluation', 'After\nrevaluation'], fontsize=18)
+
+    # Set custom y-axis ticks
+    if ymax is None:
+        max_prob = max(max(probs_train), max(probs_test))
+        y_ticks = np.arange(0, max_prob + 0.1, 0.1)
+        plt.yticks(y_ticks)
+    else:
+        y_ticks = np.arange(0, ymax + 0.1, 0.2)
+        plt.yticks(y_ticks)
+
+    if title is not None:
+        plt.title(title, fontsize=20)
+    
+    if remove_spine:
+        ax = plt.gca()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+    # Save the image
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+
+    plt.show()
+
 def plot_decision_prob_detour(probs_train, probs_test, colors, leg_loc=None, save_path=None, title=None):
     plt.rcParams['font.family'] = 'serif'
     color_palette = sns.color_palette("colorblind")
