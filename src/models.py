@@ -1176,17 +1176,21 @@ class Hybrid_NHB:
 class SR_IS_TwoStep:
     def __init__(self, alpha=0.25, beta=1.0, _lambda=1, num_steps=250, policy="softmax", imp_samp=True, seed=None):
         # Hard code start and end locations as well as size
+        # Uses 11 states with auxiliary terminal states (like SR_IS_NHB)
+        # States 0-6 are non-terminal, states 7-10 are terminal
         self.start_loc = 0
-        self.target_locs = [3,4,5,6]
+        self.target_locs = [7,8,9,10]
         self.start_locs = [0]
-        self.size = 7
+        self.size = 11
         self.agent_loc = self.start_loc
         self.seed = seed
+        self.prob_common = 0.5
+        self.rng = np.random.RandomState(seed)
 
-        # Construct the transition probability matrix and env
+        # Construct the transition probability matrix and envstep
         self.T = self.construct_T()
-        self.env = TwoStepStochastic(size=7, prob_common=0.5, seed=self.seed)
-        
+        self.envstep = self._build_envstep()
+
         # Get terminal states
         self.terminals = np.diag(self.T) == 1
         # Calculate P = T_{NT}
@@ -1195,7 +1199,7 @@ class SR_IS_TwoStep:
         # Set reward
         self.reward_nt = -0.1
         self.r = np.full(len(self.T), self.reward_nt)
-        # Reward of terminal states depends on if we are replicating reward revaluation or policy revaluation
+        # Rewards on auxiliary terminal states 7,8,9,10
         self.r[self.terminals] = [10,-10,0,1]
 
         # Precalculate exp(r) for use with LinearRL equations
@@ -1219,14 +1223,74 @@ class SR_IS_TwoStep:
         self.one_hot = np.eye(self.size)
 
     def construct_T(self):
-        # For two-step task
+        # For two-step task with auxiliary terminal states
+        # State 0 -> (1,2), State 1 -> (3,4), State 2 -> (5,6)
+        # State 3 -> 7, State 4 -> 8, State 5 -> 9, State 6 -> 10
+        # States 7,8,9,10 are terminal
         T = np.zeros((self.size, self.size))
         T[0, 1:3] = 0.5
         T[1, 3:5] = 0.5
         T[2, 5:7] = 0.5
-        T[3:7, 3:7] = np.eye(4)
+        T[3, 7] = 1
+        T[4, 8] = 1
+        T[5, 9] = 1
+        T[6, 10] = 1
+        T[7:11, 7:11] = np.eye(4)
 
         return T
+
+    def _build_envstep(self):
+        """Build the transition lookup table for 11 states."""
+        envstep = []
+        for s in range(self.size):
+            envstep.append([[0, 0], [0, 0]])  # [next_state, done]
+        envstep = np.array(envstep)
+
+        # State 0 -> 1, 2 (deterministic)
+        envstep[0, 0] = [1, 0]
+        envstep[0, 1] = [2, 0]
+
+        # State 1 -> 3, 4 (stochastic, handled in step())
+        envstep[1, 0] = [3, 0]  # common for action 0
+        envstep[1, 1] = [4, 0]  # common for action 1
+
+        # State 2 -> 5, 6 (deterministic)
+        envstep[2, 0] = [5, 0]
+        envstep[2, 1] = [6, 0]
+
+        # States 3-6 -> auxiliary terminal states (deterministic)
+        envstep[3, 0] = [7, 1]
+        envstep[3, 1] = [7, 1]
+        envstep[4, 0] = [8, 1]
+        envstep[4, 1] = [8, 1]
+        envstep[5, 0] = [9, 1]
+        envstep[5, 1] = [9, 1]
+        envstep[6, 0] = [10, 1]
+        envstep[6, 1] = [10, 1]
+
+        return envstep
+
+    def step_deterministic(self, state, action):
+        """Get the deterministic (common) transition."""
+        next_state, done = self.envstep[state, action]
+        return next_state, done
+
+    def step(self, state, action):
+        """Take a step, handling stochastic transitions for state 1."""
+        common_state, done = self.envstep[state, action]
+
+        # Handle stochastic transitions for state 1
+        if state == 1:
+            if self.rng.random() < self.prob_common:
+                next_state = common_state
+            else:
+                # Rare transition (flip to the other action's common state)
+                rare_action = 1 - action
+                next_state = self.envstep[state, rare_action][0]
+        else:
+            next_state = common_state
+
+        return next_state, done
 
     def get_DR(self):
         if self.policy == "softmax":
@@ -1263,7 +1327,7 @@ class SR_IS_TwoStep:
             action = np.random.choice([0,1])
 
             return action
-        
+
         elif self.policy == "softmax":
             successor_states = self.get_successor_states(state)
             action_probs = np.full(2, 0.0)   # We can hardcode this because every state has 2 actions
@@ -1272,12 +1336,17 @@ class SR_IS_TwoStep:
 
             # if we don't have enough info, random action
             if v_sum == 0:
-                return  np.random.choice([0,1])
+                return np.random.choice([0,1]), 1
 
             for action in [0,1]:
-                new_state, _ = self.env.step_deterministic(state, action)
+                new_state, done = self.step_deterministic(state, action)
+
+                # If we hit a done state our action doesn't matter
+                if done:
+                    action = np.random.choice([0,1])
+                    return action, 1
                 action_probs[action] = np.exp((np.log(self.Z[new_state] + 1e-20) * self._lambda) / self.beta ) / v_sum
-                
+
             action = np.random.choice([0,1], p=action_probs)
             s_prob = action_probs[action]
 
@@ -1303,26 +1372,24 @@ class SR_IS_TwoStep:
                 action, s_prob = self.select_action(state)
             else:
                 action = self.select_action(state)
-        
-            next_state, done = self.env.step(state, action)
+
+            next_state, done = self.step(state, action)
 
             if self.imp_samp:
                 w = self.importance_sampling(state, s_prob)
                 w = 1 if np.isnan(w) or w == 0 else w
             else:
                 w = 1
-            
+
             target = self.one_hot[state] + self.gamma * self.DR[next_state]
             self.DR[state] = (1 - self.alpha) * self.DR[state] + self.alpha * target * w
 
             self.Z[~self.terminals] = self.DR[~self.terminals][:,~self.terminals] @ self.P @ self.expr_t
-            
-            # print(f"state: {state}| action: {action}| next state: {next_state}")
-            
+
             if done:
                 self.agent_loc = self.start_loc
                 continue
-            
+
             # Update state
             state = next_state
             self.agent_loc = state
