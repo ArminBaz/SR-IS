@@ -21,6 +21,7 @@
 function [ action, p ] = SoftmaxLike(V, state_id, next_state_id, A_allowed, invT)
 %GREEDYCHOOSE Summary of this function goes here
 %   Detailed explanation goes here
+if nargin < 5, invT = 1; end
 poss_a = find(A_allowed(state_id,:) == 1);
 poss_next = [];
 % invT = 1;

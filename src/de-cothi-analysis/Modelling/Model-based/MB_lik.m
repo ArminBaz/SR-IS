@@ -8,7 +8,7 @@ llik = cell(n_samples,25,10);
 A_space = ["N",0,-1;"E",1,0;"S",0,1;"W",-1,0];
 load('mazes.mat');
 mazes = mazes;
-parfor rat = 1:n_samples
+for rat = 1:n_samples
     states = 1:100;
     % Organise permitted actions
     blief_map = zeros(10);
