@@ -1,13 +1,8 @@
 function [ll, llik_out] = Hybrid_lik_V(x, dat)
-%HYBRID_LIK_V Hybrid SR+MB likelihood function with VALUE-level mixing
-%   Combines SR and MB models with value mixing
-%   Parameters: x(1) = alpha (SR learning rate)
-%               x(2) = gamma (shared discount factor)
-%               x(3) = w (mixing weight: w*V_SR + (1-w)*V_MB)
 
 alpha = x(1);
 gamma = x(2);
-w = x(3);
+w     = x(3);
 
 n_samples = size(dat,1);
 llik = cell(n_samples,25,10);
@@ -15,23 +10,19 @@ llik = cell(n_samples,25,10);
 load('mazes.mat')
 load('train_T.mat')
 
-% Initialize SR model
-opt_M = inv(eye(100) - gamma*T);
+% Initialize SR model using open-field transition structure
+T_open = create_transition_matrix_open();
+opt_M = inv(eye(100) - gamma*T_open);
 opt_w = zeros(100,1);
 opt_w(34) = 1;
-mazes = mazes;
 
 for r = 1:n_samples
-    % SR initialization
     M = opt_M;
     sr_w = opt_w;
-
-    % MB initialization
     blief_map = zeros(10);
 
     for config = 1:25
         A_allowed = map2allowed(mazes{config});
-
         for start = 1:10
             lik = 1;
             traj = dat{r, config, start};

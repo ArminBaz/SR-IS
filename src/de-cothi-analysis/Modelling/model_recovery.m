@@ -314,8 +314,8 @@ for m=1:n_models; fprintf('  %-8s: %2d/%2d (%.0f%%)\n',model_names{m},counts(m),
 % =========================================================================
 fprintf('\n========== HYBRID MODEL RECOVERY ==========\n');
 
-load('Hybrid SR+MB/human_Hybrid_llik_V2.mat'); hyb_params_humans = ppt_params;
-load('Hybrid SR+MB/rat_Hybrid_llik_V2.mat');   hyb_params_rats   = ppt_params;
+load('Hybrid SR+MB/human_Hybrid_llik.mat'); hyb_params_humans = ppt_params;
+load('Hybrid SR+MB/rat_Hybrid_llik.mat');   hyb_params_rats   = ppt_params;
 
 sim_ll_hyb_humans = zeros(n_models, n_humans);
 sim_ll_hyb_rats   = zeros(n_models, n_rats);

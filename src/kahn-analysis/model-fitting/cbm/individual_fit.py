@@ -18,6 +18,8 @@ from datetime import datetime
 import warnings
 import time
 
+from joblib import Parallel, delayed
+
 from .map_estimation import optimize_map, log_posterior
 from .optimization import BFGSOptimizer, Config
 
@@ -40,7 +42,6 @@ class Prior:
         """Compute precision matrix from variance."""
         d = len(self.mean)
 
-        # Convert variance to covariance matrix
         if np.isscalar(self.variance):
             cov = self.variance * np.eye(d)
         elif self.variance.ndim == 1:
@@ -48,10 +49,8 @@ class Prior:
         else:
             cov = self.variance
 
-        # Compute precision (inverse of covariance)
         self.precision = np.linalg.inv(cov)
 
-        # Ensure mean is column vector
         if self.mean.ndim == 1:
             self.mean = self.mean.reshape(-1, 1)
 
@@ -86,8 +85,8 @@ class ProfileInfo:
 @dataclass
 class Output:
     """Main output from fitting."""
-    parameters: np.ndarray  # N×d matrix
-    log_evidence: np.ndarray  # N×1 vector
+    parameters: np.ndarray
+    log_evidence: np.ndarray
 
 
 @dataclass
@@ -107,12 +106,42 @@ class CBM:
     output: Output
 
 
+def _fit_one_subject(n, dat, model, config, prior_mean_flat, prior_precision, d):
+    """
+    Fit a single subject. Designed to be run in a parallel worker.
+    Returns a tuple of all per-subject results so the parent can collate them.
+    """
+    if config.verbose:
+        print(f"Subject: {n + 1:02d}")
+
+    loglik_n, parameters_n, hessian_n, grad_n, flag_n = optimize_map(
+        dat, model, config, prior_mean_flat, prior_precision, method='LAP'
+    )
+
+    if flag_n == 0:
+        if config.verbose:
+            print(f"No minimum found for subject {n + 1:02d}")
+
+        if config.prior_for_failed:
+            if config.verbose:
+                print("No minimum found, use prior values as individual parameters")
+            parameters_n = prior_mean_flat
+            loglik_n = log_posterior(parameters_n, model, dat, prior_mean_flat, prior_precision)
+            hessian_n = prior_precision.copy()
+            grad_n = np.full(d, np.nan)
+        else:
+            raise RuntimeError(f"Optimization failed: No minimum found for subject {n+1:02d}")
+
+    return n, loglik_n, parameters_n, hessian_n, grad_n, flag_n
+
+
 def individual_fit(data: List[Any],
                    model: Callable[[np.ndarray, Any], float],
                    prior_mean: np.ndarray,
                    prior_variance: np.ndarray | float,
                    fname: Optional[str] = None,
-                   config: Optional[Config] = None) -> CBM:
+                   config: Optional[Config] = None,
+                   n_jobs: int = -1) -> CBM:
     """
     Individual subject fitting using Laplace approximation.
 
@@ -120,28 +149,26 @@ def individual_fit(data: List[Any],
         data: List of data for N subjects (each element can be any type)
         model: Function that computes log-likelihood given parameters and data
                Signature: model(theta, data) -> log_likelihood
-        prior: Prior object with mean and variance
+        prior_mean: Prior mean
+        prior_variance: Prior variance (scalar, vector, or matrix)
         fname: Filename for saving output using pickle (None for no saving)
         config: Configuration object (optional)
+        n_jobs: Number of parallel workers. -1 uses all available cores, 1 runs sequentially.
 
     Returns:
-        Tuple of (cbm, success) where:
-            - cbm: CBM dataclass with all results
+        cbm: CBM dataclass with all results
     """
-    # Setup
-    N = len(data)  # Number of subjects
-    d = len(prior_mean)  # Number of parameters
+    N = len(data)
+    d = len(prior_mean)
 
     prior = Prior(
         mean=prior_mean,
-        variance=prior_variance  # prior variances
+        variance=prior_variance
     )
 
-    # Default configuration
     if config is None:
         config = Config(d=d)
 
-    # Initial report
     start_time = datetime.now()
     if config.verbose:
         print("=" * 70)
@@ -150,6 +177,7 @@ def individual_fit(data: List[Any],
         print(f"Number of samples: {N}")
         print(f"Number of parameters: {d}\n")
         print(f"Number of initializations: {config.num_init}")
+        print(f"Parallel jobs: {n_jobs}")
         print("-" * 70)
 
     # Test the model at prior mean
@@ -163,63 +191,41 @@ def individual_fit(data: List[Any],
     # Initialize storage
     flags = np.full(N, np.nan)
     loglik = np.full(N, np.nan)
-    parameters_list = []
-    hessian_list = []
+    parameters_list = [None] * N
+    hessian_list = [None] * N
     G = np.full((d, N), np.nan)
-    lme = np.full(N, np.nan)  # log-model-evidence
-    hessian_inv_diag = []
+    lme = np.full(N, np.nan)
+    hessian_inv_diag = [None] * N
     log_det_hessian = np.full(N, np.nan)
 
+    prior_mean_flat = prior.mean.flatten()
 
-    # Main loop over subjects
+    # Parallel subject loop
     t_start = time.time()
 
-    for n in range(N):
-        if config.verbose:
-            print(f"Subject: {n + 1:02d}")
-
-        dat = data[n]
-
-        # Create optimizer for this subject        
-
-        # Call optimize_map for this subject
-        loglik_n, parameters_n, hessian_n, grad_n, flag_n = optimize_map(
-            dat, model, config, prior.mean.flatten(), prior.precision, method='LAP'
+    results = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_one_subject)(
+            n, data[n], model, config, prior_mean_flat, prior.precision, d
         )
+        for n in range(N)
+    )
 
-        # Handle failed optimization
-        if flag_n == 0:
-            if config.verbose:
-                print(f"No minimum found for subject {n + 1:02d}")
-
-            if config.prior_for_failed:
-                if config.verbose:
-                    print("No minimum found, use prior values as individual parameters")
-                parameters_n = prior.mean.flatten()
-                loglik_n = log_posterior(parameters_n, model, dat, prior.mean.flatten(), prior.precision)
-                hessian_n = prior.precision.copy()
-                grad_n = np.full(d, np.nan)
-            else:
-                print(f"No minimum found for subject {n + 1:02d}")
-                raise RuntimeError(f"Optimization failed: No minimum found for subject {n+1:02d}")
-
-        # Store results
+    # Collate results
+    for n, loglik_n, parameters_n, hessian_n, grad_n, flag_n in results:
         flags[n] = flag_n
-        parameters_list.append(parameters_n)
+        parameters_list[n] = parameters_n
         loglik[n] = loglik_n
-        hessian_list.append(hessian_n)
-        hessian_inv_diag.append(np.diag(np.linalg.inv(hessian_n)))
+        hessian_list[n] = hessian_n
+        hessian_inv_diag[n] = np.diag(np.linalg.solve(hessian_n, np.eye(d)))
         G[:, n] = grad_n
 
         log_det_hess = np.linalg.slogdet(hessian_n)[1]
         log_det_hessian[n] = log_det_hess
 
-        # Compute log model evidence (Laplace approximation)
         lme[n] = loglik_n + 0.5 * d * np.log(2 * np.pi) - 0.5 * log_det_hess
 
     t_elapsed = time.time() - t_start
 
-    # Prepare output using dataclasses (no data stored)
     profile_info = ProfileInfo(
         datetime=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         model_name=model.__name__ if hasattr(model, '__name__') else str(model),
@@ -243,7 +249,6 @@ def individual_fit(data: List[Any],
         log_det_hessian=log_det_hessian
     )
 
-    # Stack parameters into N×d matrix
     parameters_array = np.vstack(parameters_list)
 
     output = Output(
@@ -258,12 +263,12 @@ def individual_fit(data: List[Any],
         output=output
     )
 
-    # Save if filename provided
     if fname is not None:
         with open(fname, 'wb') as f:
             pickle.dump(cbm, f)
 
     if config.verbose:
+        print(f"elapsed: {t_elapsed:.2f}s")
         print("done :]")
 
     return cbm
@@ -271,25 +276,18 @@ def individual_fit(data: List[Any],
 
 # Example usage
 if __name__ == "__main__":
-    # Example: Simple linear model
     def linear_model(theta, data):
-        """
-        Simple linear model: y ~ N(X*theta, sigma^2)
-        theta = [slope, intercept, log(sigma)]
-        """
         X, y = data
         slope, intercept, log_sigma = theta
 
         y_pred = X * slope + intercept
         sigma = np.exp(log_sigma)
 
-        # Log-likelihood of Gaussian
         log_lik = -0.5 * np.sum((y - y_pred) ** 2 / sigma ** 2) - len(y) * np.log(sigma * np.sqrt(2 * np.pi))
 
         return log_lik
 
 
-    # Generate synthetic data for 5 subjects
     np.random.seed(42)
     N_subjects = 5
     data = []
@@ -300,7 +298,6 @@ if __name__ == "__main__":
     print(X)
 
     for i in range(N_subjects):
-
         true_slope = 2.0 + np.random.randn() * 0.5
         true_intercept = 1.0 + np.random.randn() * 0.5
         true_log_sigma = np.log(0.5)
@@ -311,13 +308,11 @@ if __name__ == "__main__":
 
     true_parameters = np.array(true_parameters)
 
-    # Define prior
     prior = Prior(
-        mean=np.array([0, 0, 0]),  # slope, intercept, log(sigma)
-        variance=np.array([10, 10, 10])  # prior variances
+        mean=np.array([0, 0, 0]),
+        variance=np.array([10, 10, 10])
     )
 
-    # Configure
     config = Config(
         d=3,
         num_init=20,
@@ -325,7 +320,6 @@ if __name__ == "__main__":
         verbose=True
     )
 
-    # Run individual fitting
     print("\n" + "=" * 70)
     print("Running Individual Fit Example")
     print("=" * 70 + "\n")
@@ -344,6 +338,4 @@ if __name__ == "__main__":
     print(f"\nLog model evidence:\n{cbm.output.log_evidence}")
     print(f"\nLog model loglik:\n{cbm.math.loglik}")
     print(f"\nLog det hessian:\n{cbm.math.log_det_hessian}")
-
     print(f"\ndiff:\n{cbm.output.log_evidence - cbm.math.loglik}")
-

@@ -1,6 +1,5 @@
 function [ new_map ] = update_bliefs( blief_map, state, map)
-%UPDATE_BLIEFS Summary of this function goes here
-%   Detailed explanation goes here
+%UPDATE_BLIEFS
 
 alpha=1;
 vis=1;

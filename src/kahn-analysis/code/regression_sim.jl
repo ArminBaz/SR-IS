@@ -151,6 +151,23 @@ function sim_blockwise_TD0TD1SRMB_subject(βTD0, βTD1, βSR, βMB, βBoat, isla
     return sim_blockwise_TD0TD1SRMB_twobeta_subject(βTD0, βTD0, βTD1, βTD1, βSR, βSR, βMB, βMB, βBoat, island_bias, boat_bias, αHome, αAway, αM, γ, s, use_sr_importance_sampling, sr_λ, c; seed)
 end
 
+# Named wrappers for fitted-parameter simulations.
+# sim_blockwise_MBSR_subject: original Kahn et al. MB+SR model (no importance sampling, λ=1.0).
+function sim_blockwise_MBSR_subject(βTD0, βTD1, βSR, βMB, βBoat, island_bias, boat_bias, αHome, αAway, αM, γ, s; seed=nothing)
+    return sim_blockwise_TD0TD1SRMB_twobeta_subject(
+        βTD0, βTD0, βTD1, βTD1, βSR, βSR, βMB, βMB,
+        βBoat, island_bias, boat_bias, αHome, αAway, αM, γ, s,
+        false, 1.0, 0.0; seed)
+end
+
+# sim_blockwise_SRIS_subject: SR-IS model (importance sampling on, fitted sr_λ and c).
+function sim_blockwise_SRIS_subject(βTD0, βTD1, βSR, βMB, βBoat, island_bias, boat_bias, αHome, αAway, αM, γ, s, sr_λ, c; seed=nothing)
+    return sim_blockwise_TD0TD1SRMB_twobeta_subject(
+        βTD0, βTD0, βTD1, βTD1, βSR, βSR, βMB, βMB,
+        βBoat, island_bias, boat_bias, αHome, αAway, αM, γ, s,
+        true, sr_λ, c; seed)
+end
+
 # function sim_blockwise_LRL(;βLRL, βBoat, island_bias, boat_bias, α, αT, log_λ, σβLRL, σβBoat, σisland_bias, σboat_bias, σα, σαT, σlog_λ, c, nsims)
 ## Armin addition
 function sim_blockwise_LRL(;βLRL, βBoat, α, αT, s_λ, σβLRL, σβBoat, σα, σαT, c, nsims)

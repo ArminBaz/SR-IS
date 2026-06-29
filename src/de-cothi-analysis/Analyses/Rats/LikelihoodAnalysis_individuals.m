@@ -37,8 +37,8 @@ xticklabels({'MF','MB','SR'})
 box on
 ylabel('Log Likelihood')
 yline(baseline, 'Color','red', 'LineWidth',2,'LineStyle','--')
-ylim([-5.6e4,-5.25e4])
-yticks([-5.5e4,-5.25e4])
+% ylim([-5.6e4,-5.25e4])
+% yticks([-5.5e4,-5.25e4])
 set(gca,'FontSize',18)
 set(gcf,'color','w');
 set(gca,'LineWidth',2)

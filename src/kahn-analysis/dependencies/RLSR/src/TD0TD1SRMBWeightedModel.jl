@@ -178,35 +178,28 @@ end
 
 # Modified update_model_step! function with optional importance sampling
 function update_model_step!(agent::StateAgent{E, M, P}, s::Int, reward::Real, s′::Int) where {E, M <: TD0TD1SRMBWeightedStateModel, P}
-    # println("s: $(s) | s′:$(s′)")
-    # Update TD0, TD1, and MB models normally
-    # update_model_step!(StateAgent(agent.env, agent.model.TD0Model, agent.policy), s, reward, s′)
-    # update_model_step!(StateAgent(agent.env, agent.model.TD1Model, agent.policy), s, reward, s′)
-    # update_model_step!(StateAgent(agent.env, agent.model.MBModel, agent.policy), s, reward, s′)
-
-    # Update SR model with optional importance sampling
     if agent.model.use_sr_importance_sampling
-        # Calculate action probability and apply importance sampling
+        # SR-IS path: update SR with IS weighting; TD0/TD1/MB unused so zero their Q values.
         neighbors = find_neighbors(agent.env, s)
         action_prob = calculate_action_probability(agent.policy, agent.model, s, s′, neighbors)
         update_sr_with_importance_sampling!(agent.model.SRModel, s, reward, s′, action_prob, neighbors, agent.policy, agent.model)
+        agent.model.QSR[:] = agent.model.SRModel.Q
+        agent.model.QTD0[:] = agent.model.SRModel.Q
+        agent.model.QTD1[:] .= 0
+        agent.model.QMB[:] .= 0
+        agent.model.V[:] .= 0
     else
-        # Regular SR update
-        update_model_step!(StateAgent(agent.env, agent.model.SRModel, agent.policy), s, reward, s′)
+        # Original Kahn et al. path: update all sub-models so MB/TD0/TD1 Q values are live.
+        update_model_step!(StateAgent(agent.env, agent.model.TD0Model, agent.policy), s, reward, s′)
+        update_model_step!(StateAgent(agent.env, agent.model.TD1Model, agent.policy), s, reward, s′)
+        update_model_step!(StateAgent(agent.env, agent.model.SRModel,  agent.policy), s, reward, s′)
+        update_model_step!(StateAgent(agent.env, agent.model.MBModel,  agent.policy), s, reward, s′)
+        agent.model.QTD0[:] = agent.model.TD0Model.Q
+        agent.model.QTD1[:] = agent.model.TD1Model.Q
+        agent.model.QSR[:]  = agent.model.SRModel.Q
+        agent.model.QMB[:]  = agent.model.MBModel.Q
+        agent.model.V[:]    = agent.model.TD0Model.V
     end
-    
-    # Update combined Q-values
-    # agent.model.QTD0[:] = agent.model.TD0Model.Q
-    # agent.model.QTD1[:] = agent.model.TD1Model.Q
-    # agent.model.QSR[:] = agent.model.SRModel.Q
-    # agent.model.QMB[:] = agent.model.MBModel.Q
-    # agent.model.V[:] = agent.model.TD0Model.V
-
-    agent.model.QSR[:] = agent.model.SRModel.Q
-    agent.model.QTD0[:] .= 0
-    agent.model.QTD1[:] .= 0
-    agent.model.QMB[:] .= 0
-    agent.model.V[:] .= 0
 end
 
 # Also update the blind step function
@@ -255,21 +248,24 @@ end
 
 
 function update_model_start!(agent::StateAgent{E, M, P}) where {E, M <: TD0TD1SRMBWeightedStateModel, P}
-    # update_model_start!(StateAgent(agent.env, agent.model.TD0Model, agent.policy))
-    # update_model_start!(StateAgent(agent.env, agent.model.TD1Model, agent.policy))
-    update_model_start!(StateAgent(agent.env, agent.model.SRModel, agent.policy))
-    # update_model_start!(StateAgent(agent.env, agent.model.MBModel, agent.policy))
-    # agent.model.QTD0[:] = agent.model.TD0Model.Q
-    # agent.model.QTD1[:] = agent.model.TD1Model.Q
-    # agent.model.QSR[:] = agent.model.SRModel.Q
-    # agent.model.QMB[:] = agent.model.MBModel.Q
-    # agent.model.V[:] = agent.model.TD0Model.V
-    
-    agent.model.QTD0[:] .= 0
-    agent.model.QTD1[:] .= 0
-    agent.model.QSR[:] = agent.model.SRModel.Q
-    agent.model.QMB[:] .= 0
-    agent.model.V[:] .= 0
+    if agent.model.use_sr_importance_sampling
+        update_model_start!(StateAgent(agent.env, agent.model.SRModel, agent.policy))
+        agent.model.QSR[:] = agent.model.SRModel.Q
+        agent.model.QTD0[:] = agent.model.SRModel.Q
+        agent.model.QTD1[:] .= 0
+        agent.model.QMB[:] .= 0
+        agent.model.V[:] .= 0
+    else
+        update_model_start!(StateAgent(agent.env, agent.model.TD0Model, agent.policy))
+        update_model_start!(StateAgent(agent.env, agent.model.TD1Model, agent.policy))
+        update_model_start!(StateAgent(agent.env, agent.model.SRModel,  agent.policy))
+        update_model_start!(StateAgent(agent.env, agent.model.MBModel,  agent.policy))
+        agent.model.QTD0[:] = agent.model.TD0Model.Q
+        agent.model.QTD1[:] = agent.model.TD1Model.Q
+        agent.model.QSR[:]  = agent.model.SRModel.Q
+        agent.model.QMB[:]  = agent.model.MBModel.Q
+        agent.model.V[:]    = agent.model.TD0Model.V
+    end
 end
 
 # function update_model_step!(agent::StateAgent{E, M, P}, s::Int, reward::Real, s′::Int) where {E, M <: TD0TD1SRMBWeightedStateModel, P}
@@ -297,20 +293,24 @@ end
 # end
 
 function update_model_end!(agent::StateAgent{E, M, P}, episode::Episode) where {E, M <: TD0TD1SRMBWeightedStateModel, P}
-    # update_model_end!(StateAgent(agent.env, agent.model.TD0Model, agent.policy), episode)
-    # update_model_end!(StateAgent(agent.env, agent.model.TD1Model, agent.policy), episode)
-    update_model_end!(StateAgent(agent.env, agent.model.SRModel, agent.policy), episode)
-    # update_model_end!(StateAgent(agent.env, agent.model.MBModel, agent.policy), episode)
-    # agent.model.QTD0[:] = agent.model.TD0Model.Q
-    # agent.model.QTD1[:] = agent.model.TD1Model.Q
-    agent.model.QSR[:] = agent.model.SRModel.Q
-    # agent.model.QMB[:] = agent.model.MBModel.Q
-    # agent.model.V[:] = agent.model.TD0Model.V
-
-    agent.model.QTD0[:] .= 0
-    agent.model.QTD1[:] .= 0
-    agent.model.QMB[:] .= 0
-    agent.model.V[:] .= 0
+    if agent.model.use_sr_importance_sampling
+        update_model_end!(StateAgent(agent.env, agent.model.SRModel, agent.policy), episode)
+        agent.model.QSR[:] = agent.model.SRModel.Q
+        agent.model.QTD0[:] = agent.model.SRModel.Q
+        agent.model.QTD1[:] .= 0
+        agent.model.QMB[:] .= 0
+        agent.model.V[:] .= 0
+    else
+        update_model_end!(StateAgent(agent.env, agent.model.TD0Model, agent.policy), episode)
+        update_model_end!(StateAgent(agent.env, agent.model.TD1Model, agent.policy), episode)
+        update_model_end!(StateAgent(agent.env, agent.model.SRModel,  agent.policy), episode)
+        update_model_end!(StateAgent(agent.env, agent.model.MBModel,  agent.policy), episode)
+        agent.model.QTD0[:] = agent.model.TD0Model.Q
+        agent.model.QTD1[:] = agent.model.TD1Model.Q
+        agent.model.QSR[:]  = agent.model.SRModel.Q
+        agent.model.QMB[:]  = agent.model.MBModel.Q
+        agent.model.V[:]    = agent.model.TD0Model.V
+    end
 end
 
 # Snapshot code

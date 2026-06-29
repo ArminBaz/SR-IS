@@ -31,7 +31,6 @@ function SRModel(env, α, αM, γ, λ, c)
     # R = fill(-1, n)  # where n is the number of states
     # R[terminals] .= 0
     R = zeros(n)
-    R[nonterminals] .= -c
 
     # exp(r) at terminal states
     e_R = exp.(R[terminals]./λ)

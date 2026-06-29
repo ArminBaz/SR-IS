@@ -80,9 +80,9 @@ switch model_idx
 
     case 4  % Hybrid
         if species_idx == 1
-            load('Hybrid SR+MB/human_Hybrid_llik_V2.mat');
+            load('Hybrid SR+MB/human_Hybrid_llik.mat');
         else
-            load('Hybrid SR+MB/rat_Hybrid_llik_V2.mat');
+            load('Hybrid SR+MB/rat_Hybrid_llik.mat');
         end
 
     case 5  % SR-IS
@@ -213,9 +213,9 @@ switch model_idx
 
     % ---- Hybrid (matches Hybrid_lik_V.m) ----------------------------------
     case 4
-        alpha = params(r, 1);
-        gamma = params(r, 2);
-        w_mix = params(r, 3);
+        alpha    = params(r, 1);
+        gamma    = params(r, 2);
+        w_mix    = params(r, 3);
         opt_M = inv(eye(100) - gamma*T);
         opt_w = zeros(100,1);   opt_w(goal_state) = 1;
         M         = opt_M;
@@ -234,7 +234,7 @@ switch model_idx
                     blief_map = update_bliefs(blief_map, state_id, mazes{config});
                     [~, V_MB] = SoftmaxMB_V(state_id, blief_map, gamma, A_allowed);
                     V_hybrid   = w_mix * V_SR + (1-w_mix) * V_MB;
-                    probs      = exp(V_hybrid) / sum(exp(V_hybrid));
+                    probs      = exp(V_hybrid - max(V_hybrid)) / sum(exp(V_hybrid - max(V_hybrid)));
                     chosen_idx = randsample(length(poss_next), 1, true, probs);
                     next_state = poss_next(chosen_idx);
                     traj = [traj, next_state];
