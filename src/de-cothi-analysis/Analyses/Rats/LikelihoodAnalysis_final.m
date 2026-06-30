@@ -1,6 +1,7 @@
 load('likelihoods_individuals.mat')
 load('likelihoods_RW.mat')
 load('rat_SR_IS_llik_V2.mat')
+load('rat_Hybrid_llik.mat')
 
 % Set default properties for all figures
 set(groot, 'defaultAxesFontName', 'HelveticaNeue')
@@ -12,11 +13,12 @@ set(groot, 'defaultTextColor', 'k')
 
 cmap = brewermap(6,'Set1');
 
-lliks = zeros([4,size(MB_acts)]);
+lliks = zeros([5,size(MB_acts)]);
 lliks(1,:,:,:) = cellfun(@sum,Q_llik);
 lliks(2,:,:,:) = cellfun(@sum,MB_llik);
 lliks(3,:,:,:) = cellfun(@sum,SR_llik);
-lliks(4,:,:,:) = cellfun(@sum,SR_IS_llik);
+lliks(4,:,:,:) = cellfun(@sum,Hybrid_llik);
+lliks(5,:,:,:) = cellfun(@sum,SR_IS_llik);
 lliks_per_subject = squeeze(sum(sum(lliks, 4), 3));
 n_datapoints = squeeze(sum(sum(lliks<0, 4), 3));
 
@@ -26,12 +28,13 @@ baseline = sum(cellfun(@sum,RW_llik),'all');
 
 ll = sum(lliks,[2,3,4]);
 
-lliks = zeros([4,size(MB_acts)]);
+lliks = zeros([5,size(MB_acts)]);
 lliks_RW = exp(cellfun(@mean,RW_llik));
 lliks(1,:,:,:) = exp(cellfun(@mean,Q_llik)) - lliks_RW;
 lliks(2,:,:,:) = exp(cellfun(@mean,MB_llik)) - lliks_RW;
 lliks(3,:,:,:) = exp(cellfun(@mean,SR_llik)) - lliks_RW;
-lliks(4,:,:,:) = exp(cellfun(@mean,SR_IS_llik)) - lliks_RW;
+lliks(4,:,:,:) = exp(cellfun(@mean,Hybrid_llik)) - lliks_RW;
+lliks(5,:,:,:) = exp(cellfun(@mean,SR_IS_llik)) - lliks_RW;
 
 
 %% Model Selection
@@ -39,13 +42,14 @@ lliks(4,:,:,:) = exp(cellfun(@mean,SR_IS_llik)) - lliks_RW;
 k_MB = 1;
 k_SR = 2;
 k_MF = 2;
+k_Hybrid = 3;
 k_SR_IS = 3;
-n_models = 4;
+n_models = 5;
 n_subjects = 9;
 
 % Calculate BIC for each model for each subject
-model_names = {'MF', 'MB', 'SR', 'SR-IS'};
-n_params = [k_MF, k_MB, k_SR, k_SR_IS]';
+model_names = {'MF', 'MB', 'SR', 'Hybrid', 'SR-IS'};
+n_params = [k_MF, k_MB, k_SR, k_Hybrid, k_SR_IS]';
 n_datapoints = 25 * 10;
 BIC = -2*lliks_per_subject + n_params .* log(n_datapoints);
 lme = lliks_per_subject - 0.5*(n_params .* log(n_datapoints));
@@ -80,32 +84,21 @@ for i = 1:n_models
             100*model_counts(i)/n_subjects);
 end
 
-% fprintf('\nMean Δ BIC (relative to best model):\n');
-% model_names = {'MF', 'MB', 'SR', 'SR-IS'};
-% for i = 1:4
-%     fprintf('  %s: %.2f\n', model_names{i}, mean_delta_BIC(i));
-% end
-% 
-% % Also check group-level differences
-% fprintf('\nGroup BIC differences from SR_IS:\n');
-% for i = 1:4
-%     fprintf('  %s: %.2f\n', model_names{i}, group_BIC(i) - group_BIC(4));
-% end
-
 
 %% Figure 1: Overall Model Comparison
-figure
+figure('Position',[100,100,500,500])
 hold on
-set(gca,'FontSize',18, 'FontName', 'Times New Roman')
-bar(1:4,ll,'FaceColor','k')
-title('Rats', 'FontName', 'Times New Roman','Color','Black')
-xticks(1:4)
-xticklabels({'MF','MB','SR','SR-IS'})
+set(gca, 'Color', 'w')
+bar(1:5,ll,'FaceColor','k')
+title('Rats')
+xticks(1:5)
+xticklabels({'MF','MB','SR','Hybrid SR+MB','SR-IS'})
 box on
-ylabel('Log Likelihood', 'FontName', 'Times New Roman')
+ylabel('Log Likelihood')
 yline(baseline, 'Color','red', 'LineWidth',2,'LineStyle','--')
-ylim([-5.6e4,-5.25e4])
-yticks([-5.5e4, -5.25e4])
+ylim([-5.6e4,-5e4])
+yticks([-5.5e4, -5e4])
+set(gca,'FontSize',18)
 set(gcf,'color','w');
 set(gca,'LineWidth',2)
 
@@ -115,24 +108,24 @@ set(gca,'LineWidth',2)
 trial_lliks1 = squeeze(nanmean(lliks(:,:,:,1:5),[3,4]));  % Early trials
 trial_lliks2 = squeeze(nanmean(lliks(:,:,:,6:10),[3,4])); % Late trials
 
-figure
+figure('Position',[100,100,500,500])
 hold on
 set(gca, 'Color', 'w')
-bar([1:4, 5.5:1:8.5], [mean(trial_lliks1, 2); mean(trial_lliks2,2)],'EdgeColor','k','FaceColor','w','LineWidth',2)
+bar([1:5, 6.5:1:10.5], [mean(trial_lliks1, 2); mean(trial_lliks2,2)],'EdgeColor','k','FaceColor','w','LineWidth',2)
 
 for i = 1:9
-    plot((1:4) + (-0.05+0.1*rand(1,4)), trial_lliks1(:,i), 'k.-','MarkerSize',12, 'linewidth',1.5)
-    plot((5.5:1:8.5) + (-0.05+0.1*rand(1,4)), trial_lliks2(:,i), 'k.-','MarkerSize',12, 'linewidth',1.5)
+    plot((1:5) + (-0.05+0.1*rand(1,5)), trial_lliks1(:,i), 'k.-','MarkerSize',12, 'linewidth',1.5)
+    plot((6.5:1:10.5) + (-0.05+0.1*rand(1,5)), trial_lliks2(:,i), 'k.-','MarkerSize',12, 'linewidth',1.5)
 end
 
 % title('Rats')
-xline(4.75,':k','LineWidth',2)
+xline(5.75,':k','LineWidth',2)
 set(gcf,'color','w');
 set(gca,'LineWidth',2)
 ylim([0,0.042])
 yticks([0, 0.04])
-xticks([1:4, 5.5:1:8.5])
-xticklabels({'MF', 'MB','SR','SR-IS','MF', 'MB','SR','SR-IS'})
+xticks([1:5, 6.5:1:10.5])
+xticklabels({'MF', 'MB','SR','Hybrid SR+MB','SR-IS','MF', 'MB','SR','Hybrid SR+MB','SR-IS'})
 ylabel('Action likelihood', 'FontSize', 20)
 ax = gca;
 ax.XAxis.FontSize = 18;
@@ -140,33 +133,70 @@ box on
 
 
 %% Figure 3: Heatmap by Maze Configuration
-figure('Position', [100, 100, 800, 250])  % Adjust figure size [left, bottom, width, height]
-imagesc(squeeze(nanmedian(lliks,[2,4])))
-set(gca,'FontSize',18)
-set(gcf,'color','w');
-set(gca,'LineWidth',2)
-yticks([1,2,3,4])
-yticklabels({'MF','MB','SR','SR-IS'})
-colormap jet
-cb = colorbar;
-caxis([0.0,0.03])
+% figure('Position', [100, 100, 800, 250])  % Adjust figure size [left, bottom, width, height]
+% imagesc(squeeze(nanmedian(lliks,[2,4])))
+% set(gca,'FontSize',18)
+% set(gcf,'color','w');
+% set(gca,'LineWidth',2)
+% yticks([1,2,3,4,5])
+% yticklabels({'MF','MB','SR','Hybrid SR+MB','SR-IS'})
+% colormap jet
+% cb = colorbar;
+% caxis([0.0,0.03])
+% pbaspect([25 5 1])
+% 
+% set(gca, 'FontWeight', 'normal')
+% set(gca, 'TickDir', 'out')
+% set(gca, 'TickLength', [0 0])
+% set(cb, 'Ticks', [0, 0.03])
+% set(cb, 'TickLabels', {'0', '0.03'})
+% set(cb, 'Color', 'k')
+% set(cb, 'FontSize', 18)
+
+data  = squeeze(nanmean(lliks,[2,4]));
+cmax  = 0.05; gamma = 0.40;
+data_s = (min(max(data,0),cmax)/cmax).^gamma;
+
+% diverging orange→blue with a *light* (not grey) center, rich orange low end
+anchors = [0.80 0.42 0.18;     % deep orange  (lowest configs)
+           0.886 0.620 0.416;  % #E29E6A
+           0.97 0.94 0.88;     % cream center (avoids mud)
+           0.357 0.553 0.722;  % #5B8DB8
+           0.13 0.24 0.40];    % deep navy    (SR-IS)
+x  = [0 0.28 0.50 0.74 1];
+xi = linspace(0,1,256);
+cmap_ob = [interp1(x,anchors(:,1),xi)', ...
+           interp1(x,anchors(:,2),xi)', ...
+           interp1(x,anchors(:,3),xi)'];
+
+figure('Position',[100,100,1000,310])   % was 800,250
+imagesc(data_s); caxis([0 1])
+colormap(cmap_ob)
+
+hold on
+[ny,nx] = size(data);
+for k = 0.5:1:nx+0.5, xline(k,'w','LineWidth',1.5); end
+for k = 0.5:1:ny+0.5, yline(k,'w','LineWidth',1.5); end
+
+set(gca,'FontSize',18,'LineWidth',2,'FontWeight','normal', ...
+        'TickDir','out','TickLength',[0 0])
+set(gcf,'color','w')
+set(gca,'FontSize',20)
+yticks(1:5); yticklabels({'MF','MB','SR','Hybrid SR+MB','SR-IS'})
 pbaspect([25 5 1])
 
-set(gca, 'FontWeight', 'normal')
-set(gca, 'TickDir', 'out')
-set(gca, 'TickLength', [0 0])
-set(cb, 'Ticks', [0, 0.03])
-set(cb, 'TickLabels', {'0', '0.03'})
-set(cb, 'Color', 'k')
-set(cb, 'FontSize', 18)
+ticks_real = [0 0.01 0.05];
+ticks_pos  = (ticks_real/cmax).^gamma;
+cb = colorbar;
+set(cb,'Ticks',ticks_pos,'TickLabels',compose('%.3g',ticks_real),'Color','k','FontSize',20)
 
 
 %% Figure 4: Winner Proportion Pie Chart with percentages
 figure
 pie_data = nanmean(ll_winners,[2,3,4]) / sum(nanmean(ll_winners,[2,3,4]));
-labels = {'MF', 'MB', 'SR', 'SR-IS'};
-pie_labels = cell(1,4);
-for i = 1:4
+labels = {'MF', 'MB', 'SR', 'Hybrid', 'SR-IS'};
+pie_labels = cell(1,5);
+for i = 1:5
     pie_labels{i} = sprintf('%s\n%.1f%%', labels{i}, pie_data(i)*100);
 end
 h = pie(pie_data, pie_labels);
@@ -183,24 +213,24 @@ set(gca,'LineWidth',4)
 
 %% Figure 5
 % Per-subject RW log-likelihood, then median across subjects
-RW_per_subject = squeeze(sum(sum(cellfun(@sum, RW_llik), 3), 2));
-baseline_median = median(RW_per_subject);
-disp(baseline_median);
-
-figure
-hold on
-set(gca, 'Color', 'w')
-ll_plot   = median(lme, 2);
-bar(1:4, ll_plot, 'FaceColor', 'k')
-xticks(1:4)
-xticklabels({'MF','MB','SR','SR-IS'})
-box on
-ylabel('Log model evidence')
-yline(baseline_median, 'Color', 'red', 'LineWidth', 2, 'LineStyle', '--')
-ylim([-6.25e3,-5.85e3])
-yticks([-6.25e3, -5.85e3])
-ax = gca;
-ax.YAxis.Exponent = 3;
-set(gca, 'FontSize', 20)
-set(gcf, 'color', 'w');
-set(gca, 'LineWidth', 2)
+% RW_per_subject = squeeze(sum(sum(cellfun(@sum, RW_llik), 3), 2));
+% baseline_median = median(RW_per_subject);
+% disp(baseline_median);
+% 
+% figure
+% hold on
+% set(gca, 'Color', 'w')
+% ll_plot   = median(lme, 2);
+% bar(1:5, ll_plot, 'FaceColor', 'k')
+% xticks(1:5)
+% xticklabels({'MF','MB','SR','Hybrid SR+MB','SR-IS'})
+% box on
+% ylabel('Log model evidence')
+% yline(baseline_median, 'Color', 'red', 'LineWidth', 2, 'LineStyle', '--')
+% ylim([-6.25e3,-5.85e3])
+% yticks([-6.25e3, -5.85e3])
+% ax = gca;
+% ax.YAxis.Exponent = 3;
+% set(gca, 'FontSize', 20)
+% set(gcf, 'color', 'w');
+% set(gca, 'LineWidth', 2)
