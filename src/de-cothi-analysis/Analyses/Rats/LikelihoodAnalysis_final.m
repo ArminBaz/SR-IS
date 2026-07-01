@@ -192,7 +192,7 @@ set(cb,'Ticks',ticks_pos,'TickLabels',compose('%.3g',ticks_real),'Color','k','Fo
 
 
 %% Figure 4: Winner Proportion Pie Chart with percentages
-figure
+figure('Position',[100,100,300,300])
 pie_data = nanmean(ll_winners,[2,3,4]) / sum(nanmean(ll_winners,[2,3,4]));
 labels = {'MF', 'MB', 'SR', 'Hybrid', 'SR-IS'};
 pie_labels = cell(1,5);
@@ -202,7 +202,7 @@ end
 h = pie(pie_data, pie_labels);
 % Make the pie chart lines thicker and black
 for i = 1:2:length(h)
-    set(h(i), 'LineWidth', 3, 'EdgeColor', 'k')
+    set(h(i), 'LineWidth', 1.5, 'EdgeColor', 'k')
 end
 colormap(ones(3))
 set(gca,'FontSize',18)
