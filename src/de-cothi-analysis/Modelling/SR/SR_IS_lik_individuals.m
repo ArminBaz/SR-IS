@@ -10,7 +10,7 @@ A = []; b = []; Aeq = []; beq = [];
 for sp = 2:2
     if sp == 1
         dat = humans;
-        savefile = 'human_SR_IS_llik_V2.mat';
+        savefile = 'human_SR_IS_llik_V3.mat';
         species = 'human';
     else
         dat = rat;
