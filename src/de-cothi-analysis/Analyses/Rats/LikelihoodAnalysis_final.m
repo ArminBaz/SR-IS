@@ -194,7 +194,7 @@ set(cb,'Ticks',ticks_pos,'TickLabels',compose('%.3g',ticks_real),'Color','k','Fo
 %% Figure 4: Winner Proportion Pie Chart with percentages
 figure('Position',[100,100,300,300])
 pie_data = nanmean(ll_winners,[2,3,4]) / sum(nanmean(ll_winners,[2,3,4]));
-labels = {'MF', 'MB', 'SR', 'Hybrid', 'SR-IS'};
+labels = {'MF', 'MB', 'SR', 'Hybrid SR+MB', 'SR-IS'};
 pie_labels = cell(1,5);
 for i = 1:5
     pie_labels{i} = sprintf('%s\n%.1f%%', labels{i}, pie_data(i)*100);
